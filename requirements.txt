@@ -1,0 +1,6 @@
+discord.py
+aiohttp
+python-dotenv
+ddgs
+trafilatura
+pypdf
