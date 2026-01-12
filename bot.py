@@ -251,13 +251,14 @@ def is_inside_thinking_tags(text: str) -> bool:
     
     return (open_tags > close_tags) or (open_brackets > close_brackets)
 
-async def process_image_attachment(attachment) -> Optional[Dict]:
+async def process_image_attachment(attachment, channel) -> Optional[Dict]:
     """Download and convert an image attachment to base64 for the vision model."""
     if not attachment.content_type or not attachment.content_type.startswith('image/'):
         return None
     
     if attachment.size > MAX_IMAGE_SIZE * 1024 * 1024:
         logger.warning(f"Image too large: {attachment.size / (1024*1024):.2f}MB (max: {MAX_IMAGE_SIZE}MB)")
+        await channel.send(f"⚠️ Image **{attachment.filename}** is too large ({attachment.size / (1024*1024):.2f}MB). Maximum size is {MAX_IMAGE_SIZE}MB.")
         return None
     
     try:
@@ -290,9 +291,10 @@ async def process_image_attachment(attachment) -> Optional[Dict]:
         logger.error(f"Error processing image {attachment.filename}: {e}")
         logger.debug(f"  Content type was: {attachment.content_type}")
         logger.debug(f"  Filename was: {attachment.filename}")
+        await channel.send(f"❌ Failed to process image **{attachment.filename}**: {str(e)}")
         return None
 
-async def process_text_attachment(attachment) -> Optional[str]:
+async def process_text_attachment(attachment, channel) -> Optional[str]:
     """Download and read a text file attachment."""
     text_extensions = ['.txt', '.md', '.py', '.js', '.java', '.c', '.cpp', '.h', '.html', 
                       '.css', '.json', '.xml', '.yaml', '.yml', '.csv', '.log', '.sh', 
@@ -309,6 +311,7 @@ async def process_text_attachment(attachment) -> Optional[str]:
     
     if attachment.size > MAX_TEXT_FILE_SIZE * 1024 * 1024:
         logger.warning(f"Text file too large: {attachment.size / (1024*1024):.2f}MB (max: {MAX_TEXT_FILE_SIZE}MB)")
+        await channel.send(f"⚠️ Text file **{attachment.filename}** is too large ({attachment.size / (1024*1024):.2f}MB). Maximum size is {MAX_TEXT_FILE_SIZE}MB.")
         return None
     
     try:
@@ -323,10 +326,12 @@ async def process_text_attachment(attachment) -> Optional[str]:
                 continue
         
         logger.error(f"Could not decode text file {attachment.filename}")
+        await channel.send(f"❌ Could not decode text file **{attachment.filename}**. Please ensure it's a valid text file.")
         return None
         
     except Exception as e:
         logger.error(f"Error processing text file {attachment.filename}: {e}")
+        await channel.send(f"❌ Failed to process text file **{attachment.filename}**: {str(e)}")
         return None
 
 async def fetch_available_models() -> List[str]:
@@ -1190,20 +1195,23 @@ async def on_message(message):
     # Process any attachments if enabled
     images = []
     text_files_content = ""
-    
+
     if message.attachments:
         for attachment in message.attachments:
-            if ALLOW_IMAGES:
-                image_data = await process_image_attachment(attachment)
+            if ALLOW_IMAGES and attachment.content_type and attachment.content_type.startswith('image/'):
+                image_data = await process_image_attachment(attachment, message.channel)
                 if image_data:
                     images.append(image_data)
-                    continue
-            
-            if ALLOW_TEXT_FILES:
-                text_content = await process_text_attachment(attachment)
+                else:
+                    # Image was rejected - abort entire message processing
+                    logger.info(f"Aborting message processing due to rejected image: {attachment.filename}")
+                    return
+            elif ALLOW_TEXT_FILES:
+                text_content = await process_text_attachment(attachment, message.channel)
                 if text_content:
                     text_files_content += text_content
-    
+                # Note: Rejected text files don't abort processing
+
     if not message.content.strip() and not images and not text_files_content:
         return
     
