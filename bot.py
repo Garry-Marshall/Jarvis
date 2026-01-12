@@ -15,6 +15,8 @@ from logging.handlers import RotatingFileHandler
 import asyncio
 import re
 from ddgs import DDGS
+import trafilatura
+from trafilatura.settings import use_config
 
 # Load environment variables from .env file
 load_dotenv()
@@ -157,6 +159,25 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True  # Need this for voice channels
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+async def fetch_url_content(url: str) -> str:
+    """Fetch and clean the main text content from a specific URL."""
+    try:
+        # Create a custom config for the User-Agent
+        new_config = use_config()
+        new_config.set("DEFAULT", "USER_AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+        
+        # Pass the config object instead of a direct user_agent argument
+        downloaded = trafilatura.fetch_url(url, config=new_config)
+        if not downloaded:
+            return ""
+        
+        # Extract main text content
+        content = trafilatura.extract(downloaded, include_comments=False, include_tables=True)
+        return content if content else ""
+    except Exception as e:
+        logger.error(f"Error fetching URL {url}: {e}")
+        return ""
 
 async def get_recent_context(channel, limit: int = CONTEXT_MESSAGES) -> List[Dict[str, str]]:
     """Fetch recent messages from the Discord channel to provide context."""
@@ -594,6 +615,51 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
         )
     else:
         final_system_prompt = base_system_prompt
+
+# 1. Detect if the user provided a URL
+    #url_pattern = r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+'
+    url_pattern = r'https?://(?:[^\s()<>]+|(?:\([^\s()<>]*\)))+(?:(?:\([^\s()<>]*\))|[^\s`!()\[\]{};:\'\".,<>?«»“”‘’])'
+    found_urls = re.findall(url_pattern, message_text)
+    
+    url_context = ""
+    if found_urls:
+        target_url = found_urls[0] # Focus on the first URL provided
+        logger.info(f"🔗 URL detected. Fetching content from: {target_url}")
+        url_context = await fetch_url_content(target_url)
+        
+        if url_context:
+                    # Set to 60,000 characters (~15,000 tokens)
+                    max_chars = 60000 
+                    
+                    # Check if we are actually truncating
+                    if len(url_context) > max_chars:
+                        logger.info(f"✂️ URL content truncated from {len(url_context)} to {max_chars} characters.")
+                        url_context = url_context[:max_chars]
+                    else:
+                        logger.info(f"📖 URL content fully loaded ({len(url_context)} characters).")
+                    
+                    print(f"\n--- DEBUG: FETCHED URL CONTENT ---\n{url_context[:500]}...\n")
+
+    # 2. Update System Prompt Injection
+    base_system_prompt = "You are a helpful assistant."
+    if guild_id and guild_id in guild_settings:
+        base_system_prompt = guild_settings[guild_id].get("system_prompt", base_system_prompt)
+
+    # Combine Web Search and URL Context
+    final_system_prompt = base_system_prompt
+    
+    if web_context or url_context:
+        final_system_prompt += "\n\nADDITIONAL CONTEXT FOR THIS REQUEST:"
+        if web_context:
+            final_system_prompt += f"\n[Web Search Results]:\n{web_context}"
+        if url_context:
+            final_system_prompt += f"\n[Content from provided URL]:\n{url_context}"
+            
+        final_system_prompt += (
+            "\n\nINSTRUCTION: Prioritize using the provided context (Search Results or URL content) "
+            "to answer. If the answer is found in the context, cite the source if possible."
+        )
+        
 
     # 3. Model and History Setup
     model_to_use = selected_models.get(guild_id, default_model) if guild_id else default_model
