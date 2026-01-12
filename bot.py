@@ -91,6 +91,17 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+#define stats file
+STATS_FILE = "channel_stats.json"
+
+#load stats file if exists
+channel_stats = {}
+
+if os.path.exists(STATS_FILE):
+    with open(STATS_FILE, "r", encoding="utf-8") as f:
+        channel_stats = deserialize_stats(json.load(f))
+
+
 # Configuration
 DISCORD_TOKEN = os.getenv('DISCORD_BOT_TOKEN', 'your-discord-bot-token-here')
 LMSTUDIO_URL = os.getenv('LMSTUDIO_URL', 'http://localhost:1234/v1/chat/completions')
@@ -133,7 +144,10 @@ channel_stats: Dict[int, Dict] = defaultdict(lambda: {
     'total_tokens_estimate': 0,
     'start_time': datetime.now(),
     'last_message_time': None,
-    'response_times': []
+    'response_times': [],
+    "prompt_tokens_estimate": int,
+    "response_tokens_raw": int,
+    "response_tokens_cleaned": int,
 })
 
 # Initialise guild settings
@@ -159,6 +173,33 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True  # Need this for voice channels
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+def serialize_stats(stats: dict) -> dict:
+    out = {}
+    for cid, data in stats.items():
+        out[str(cid)] = {
+            **data,
+            "start_time": data["start_time"].isoformat(),
+            "last_message_time": (
+                data["last_message_time"].isoformat()
+                if data["last_message_time"] else None
+            ),
+        }
+    return out
+
+
+def deserialize_stats(data: dict) -> dict:
+    out = {}
+    for cid, stats in data.items():
+        out[int(cid)] = {
+            **stats,
+            "start_time": datetime.fromisoformat(stats["start_time"]),
+            "last_message_time": (
+                datetime.fromisoformat(stats["last_message_time"])
+                if stats["last_message_time"] else None
+            ),
+        }
+    return out
 
 async def fetch_url_content(url: str) -> str:
     """Fetch and clean the main text content from a specific URL."""
@@ -645,7 +686,6 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
     conversation_histories[conversation_id].append({"role": "user", "content": current_content})
     
     # 4. Build the final API Message List
-    #prompt_tokens_est = estimate_tokens(final_system_prompt)
     api_messages = []
     api_messages.append({"role": "system", "content": final_system_prompt})
 
@@ -683,8 +723,21 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
         payload["max_tokens"]
     )
     # ----------------------------------------------
-    
     # 5. API Request
+    stats = channel_stats.setdefault(
+        conversation_id,
+        {
+            "start_time": datetime.now(),
+            "total_messages": 0,
+
+            "prompt_tokens_estimate": 0,
+            "response_tokens_raw": 0,
+            "response_tokens_cleaned": 0,
+
+            "response_times": [],
+            "last_message_time": None,
+        }
+    )
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(LMSTUDIO_URL, json=payload) as response:
@@ -725,7 +778,17 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
 
                     raw_token_count = estimate_tokens(assistant_message)
                     cleaned_token_count = estimate_tokens(assistant_message_filtered)
+                    stats["prompt_tokens_estimate"] += estimated_prompt_tokens
+                    stats["response_tokens_raw"] += raw_token_count
+                    stats["response_tokens_cleaned"] += cleaned_token_count
+                    stats["total_tokens_estimate"] = (
+                        stats["prompt_tokens_estimate"]
+                        + stats["response_tokens_cleaned"]
+                    )
 
+                    with open(STATS_FILE, "w", encoding="utf-8") as f:
+                        json.dump(serialize_stats(channel_stats), f, indent=2)
+                    
                     logger.info(
                         "Response tokens | convo=%s | raw=%d | cleaned=%d | removed=%d | time=%.2fs",
                         conversation_id,
@@ -733,17 +796,6 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
                         cleaned_token_count,
                         raw_token_count - cleaned_token_count,
                         response_time
-                    )
-
-                    stats = channel_stats.setdefault(
-                        conversation_id,
-                        {
-                            "start_time": datetime.now(),
-                            "total_messages": 0,
-                            "total_tokens_estimate": 0,
-                            "response_times": [],
-                            "last_message_time": None,
-                        }
                     )
 
                     # Count ONE assistant response
@@ -832,7 +884,10 @@ async def show_stats(interaction: discord.Interaction):
     stats_message = f"""📈 **Conversation Statistics**
     
 **Total Messages:** {stats['total_messages']}
-**Estimated Tokens:** {stats['total_tokens_estimate']:,}
+**Prompt Tokens (est):** {stats['prompt_tokens_estimate']:,}
+**Response Tokens (raw):** {stats['response_tokens_raw']:,}
+**Response Tokens (cleaned):** {stats['response_tokens_cleaned']:,}
+**Total Tokens (est):** {(stats['prompt_tokens_estimate'] + stats['response_tokens_cleaned']):,}
 **Session Duration:** {hours}h {minutes}m {seconds}s
 **Average Response Time:** {avg_response_time:.2f}s
 **Last Message:** {last_msg}
@@ -840,6 +895,34 @@ async def show_stats(interaction: discord.Interaction):
     """
     
     await interaction.response.send_message(stats_message, ephemeral=True)
+
+@bot.tree.command(name="stats_reset", description="Reset conversation statistics for this channel")
+async def reset_stats(interaction: discord.Interaction):
+    conversation_id = interaction.channel_id if interaction.guild else interaction.user.id
+
+    if not interaction.guild and not ALLOW_DMS:
+        await interaction.response.send_message(
+            "❌ DM conversations are not enabled.",
+            ephemeral=True
+        )
+        return
+
+    if conversation_id not in channel_stats:
+        await interaction.response.send_message(
+            "ℹ️ No stats to reset.",
+            ephemeral=True
+        )
+        return
+
+    channel_stats.pop(conversation_id, None)
+
+    with open(STATS_FILE, "w", encoding="utf-8") as f:
+        json.dump(serialize_stats(channel_stats), f, indent=2)
+
+    await interaction.response.send_message(
+        "🧹 Conversation statistics reset.",
+        ephemeral=True
+    )
 
 @bot.tree.command(name='join', description='Join your voice channel')
 async def join_voice(interaction: discord.Interaction):
