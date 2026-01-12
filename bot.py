@@ -12,6 +12,7 @@ import base64
 import io
 import logging
 from logging.handlers import RotatingFileHandler
+import asyncio
 
 # Load environment variables from .env file
 load_dotenv()
@@ -50,6 +51,11 @@ MAX_TEXT_FILE_SIZE=2
 
 # Reasoning Model Settings
 HIDE_THINKING=true
+
+# Voice/TTS Settings
+ENABLE_TTS=true
+ALLTALK_URL=http://127.0.0.1:7851
+ALLTALK_VOICE=alloy
 """
     with open(env_file_path, 'w', encoding='utf-8') as f:
         f.write(default_env_content)
@@ -93,6 +99,12 @@ MAX_IMAGE_SIZE = int(os.getenv('MAX_IMAGE_SIZE', '5'))
 ALLOW_TEXT_FILES = os.getenv('ALLOW_TEXT_FILES', 'true').lower() == 'true'
 MAX_TEXT_FILE_SIZE = int(os.getenv('MAX_TEXT_FILE_SIZE', '2'))
 HIDE_THINKING = os.getenv('HIDE_THINKING', 'true').lower() == 'true'
+ENABLE_TTS = os.getenv('ENABLE_TTS', 'true').lower() == 'true'
+ALLTALK_URL = os.getenv('ALLTALK_URL', 'http://127.0.0.1:7851')
+ALLTALK_VOICE = os.getenv('ALLTALK_VOICE', 'alloy')
+
+# OpenAI-compatible voice names for AllTalk TTS
+AVAILABLE_VOICES = ['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer']
 
 # Parse channel IDs from environment variable (comma-separated)
 CHANNEL_IDS_STR = os.getenv('DISCORD_CHANNEL_IDS', '0')
@@ -119,9 +131,16 @@ channel_stats: Dict[int, Dict] = defaultdict(lambda: {
     'response_times': []
 })
 
+# Store voice channel connections per guild
+voice_clients: Dict[int, discord.VoiceClient] = {}
+
+# Store selected voice per guild
+selected_voices: Dict[int, str] = defaultdict(lambda: ALLTALK_VOICE)
+
 # Bot setup with message content intent
 intents = discord.Intents.default()
 intents.message_content = True
+intents.voice_states = True  # Need this for voice channels
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 async def get_recent_context(channel, limit: int = CONTEXT_MESSAGES) -> List[Dict[str, str]]:
@@ -262,6 +281,49 @@ async def process_text_attachment(attachment) -> Optional[str]:
         logger.error(f"Error processing text file {attachment.filename}: {e}")
         return None
 
+async def text_to_speech(text: str, voice: str = None) -> Optional[bytes]:
+    """Convert text to speech using AllTalk TTS (OpenAI compatible endpoint)."""
+    if not voice or voice not in AVAILABLE_VOICES:
+        voice = ALLTALK_VOICE
+    
+    try:
+        # Remove any remaining thinking tags or markers from the text
+        clean_text = remove_thinking_tags(text)
+        
+        if not clean_text.strip():
+            logger.warning("No text to speak after filtering")
+            return None
+        
+        # Use OpenAI-compatible endpoint
+        payload = {
+            "model": "tts-1",
+            "input": clean_text,
+            "voice": voice
+        }
+        
+        logger.info(f"Generating TTS with voice '{voice}': {clean_text[:100]}...")
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{ALLTALK_URL}/v1/audio/speech",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=60)
+            ) as response:
+                if response.status == 200:
+                    audio_data = await response.read()
+                    logger.info(f"Generated {len(audio_data)} bytes of audio")
+                    return audio_data
+                else:
+                    error_text = await response.text()
+                    logger.error(f"AllTalk TTS error: {response.status} - {error_text}")
+                    return None
+    except asyncio.TimeoutError:
+        logger.error("AllTalk TTS request timed out")
+        return None
+    except Exception as e:
+        logger.error(f"Error generating TTS: {e}")
+        return None
+
 async def query_lmstudio(conversation_id: int, message_text: str, channel, username: str, images: List[Dict] = None) -> Optional[str]:
     """Send a message to LMStudio API with conversation history and return the response."""
     start_time = time.time()
@@ -332,8 +394,7 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
         logger.debug(f"  {i+1}. {msg['role']}: {content_preview}")
     
     payload = {
-        #"model": "local-model",
-        "model": "zai-org/glm-4.6v-flash",
+        "model": "local-model",
         "messages": api_messages,
         "temperature": 0.7,
         "max_tokens": -1,
@@ -481,6 +542,126 @@ async def show_stats(interaction: discord.Interaction):
     
     await interaction.response.send_message(stats_message, ephemeral=True)
 
+@bot.tree.command(name='join', description='Join your voice channel')
+async def join_voice(interaction: discord.Interaction):
+    """Join the voice channel the user is currently in."""
+    if not ENABLE_TTS:
+        await interaction.response.send_message("❌ TTS is currently disabled in the bot configuration.", ephemeral=True)
+        return
+    
+    # Check if user is in a voice channel
+    if not interaction.user.voice or not interaction.user.voice.channel:
+        await interaction.response.send_message("❌ You need to be in a voice channel first!", ephemeral=True)
+        return
+    
+    voice_channel = interaction.user.voice.channel
+    guild_id = interaction.guild.id
+    
+    # Check if already connected
+    if guild_id in voice_clients and voice_clients[guild_id].is_connected():
+        if voice_clients[guild_id].channel.id == voice_channel.id:
+            await interaction.response.send_message("✅ Already in your voice channel!", ephemeral=True)
+            return
+        else:
+            # Move to the new channel
+            await voice_clients[guild_id].move_to(voice_channel)
+            await interaction.response.send_message(f"✅ Moved to {voice_channel.name}!", ephemeral=True)
+            logger.info(f"Moved to voice channel: {voice_channel.name} in {interaction.guild.name}")
+            return
+    
+    try:
+        # Connect to voice channel
+        voice_client = await voice_channel.connect()
+        voice_clients[guild_id] = voice_client
+        await interaction.response.send_message(f"✅ Joined {voice_channel.name}! I'll speak my responses here.", ephemeral=True)
+        logger.info(f"Joined voice channel: {voice_channel.name} in {interaction.guild.name}")
+    except Exception as e:
+        logger.error(f"Error joining voice channel: {e}")
+        await interaction.response.send_message(f"❌ Failed to join voice channel: {str(e)}", ephemeral=True)
+
+@bot.tree.command(name='leave', description='Leave the voice channel')
+async def leave_voice(interaction: discord.Interaction):
+    """Leave the current voice channel."""
+    if not ENABLE_TTS:
+        await interaction.response.send_message("❌ TTS is currently disabled in the bot configuration.", ephemeral=True)
+        return
+    
+    guild_id = interaction.guild.id
+    
+    if guild_id not in voice_clients or not voice_clients[guild_id].is_connected():
+        await interaction.response.send_message("❌ I'm not in a voice channel!", ephemeral=True)
+        return
+    
+    try:
+        await voice_clients[guild_id].disconnect()
+        del voice_clients[guild_id]
+        await interaction.response.send_message("✅ Left the voice channel.", ephemeral=True)
+        logger.info(f"Left voice channel in {interaction.guild.name}")
+    except Exception as e:
+        logger.error(f"Error leaving voice channel: {e}")
+        await interaction.response.send_message(f"❌ Failed to leave voice channel: {str(e)}", ephemeral=True)
+
+class VoiceSelectView(discord.ui.View):
+    """View with dropdown for voice selection."""
+    def __init__(self, current_voice: str):
+        super().__init__(timeout=60)
+        self.add_item(VoiceSelectDropdown(current_voice))
+
+class VoiceSelectDropdown(discord.ui.Select):
+    """Dropdown menu for selecting TTS voice."""
+    def __init__(self, current_voice: str):
+        options = [
+            discord.SelectOption(
+                label=voice.capitalize(),
+                value=voice,
+                description=f"OpenAI voice: {voice}",
+                default=(voice == current_voice)
+            )
+            for voice in AVAILABLE_VOICES
+        ]
+        
+        super().__init__(
+            placeholder="Select a voice...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        selected_voice = self.values[0]
+        guild_id = interaction.guild.id
+        selected_voices[guild_id] = selected_voice
+        
+        await interaction.response.send_message(
+            f"✅ Voice changed to: **{selected_voice}**",
+            ephemeral=True
+        )
+        logger.info(f"Voice changed to '{selected_voice}' in {interaction.guild.name}")
+
+@bot.tree.command(name='voice', description='Select TTS voice')
+async def select_voice(interaction: discord.Interaction):
+    """Show dropdown to select TTS voice."""
+    if not ENABLE_TTS:
+        await interaction.response.send_message("❌ TTS is currently disabled in the bot configuration.", ephemeral=True)
+        return
+    
+    guild_id = interaction.guild.id
+    current_voice = selected_voices.get(guild_id, ALLTALK_VOICE)
+    
+    view = VoiceSelectView(current_voice)
+    await interaction.response.send_message(
+        f"**Current voice:** {current_voice}\n\n**Available voices:**\n"
+        f"• **alloy** - Neutral and balanced\n"
+        f"• **echo** - Clear and expressive\n"
+        f"• **fable** - Warm and engaging\n"
+        f"• **nova** - Energetic and bright\n"
+        f"• **onyx** - Deep and authoritative\n"
+        f"• **shimmer** - Soft and soothing\n\n"
+        f"Select a new voice:",
+        view=view,
+        ephemeral=True
+    )
+
 @bot.event
 async def on_ready():
     """Called when the bot successfully connects to Discord."""
@@ -510,6 +691,9 @@ async def on_ready():
     logger.info(f'ALLOW_TEXT_FILES setting: {ALLOW_TEXT_FILES}')
     logger.info(f'MAX_TEXT_FILE_SIZE setting: {MAX_TEXT_FILE_SIZE}MB')
     logger.info(f'HIDE_THINKING setting: {HIDE_THINKING}')
+    logger.info(f'ENABLE_TTS setting: {ENABLE_TTS}')
+    logger.info(f'ALLTALK_URL setting: {ALLTALK_URL}')
+    logger.info(f'ALLTALK_VOICE setting: {ALLTALK_VOICE}')
     logger.info(f'Logging to: {log_filename}')
 
 @bot.event
@@ -613,6 +797,29 @@ async def on_message(message):
                         await message.channel.send(chunk)
                 else:
                     await status_msg.edit(content=final_response)
+                
+                # If bot is in a voice channel in this guild, speak the response
+                if ENABLE_TTS and not is_dm and message.guild.id in voice_clients:
+                    voice_client = voice_clients[message.guild.id]
+                    if voice_client.is_connected() and not voice_client.is_playing():
+                        try:
+                            guild_voice = selected_voices.get(message.guild.id, ALLTALK_VOICE)
+                            audio_data = await text_to_speech(final_response, guild_voice)
+                            
+                            if audio_data:
+                                # Save audio to temporary file
+                                temp_audio = f"temp_tts_{message.guild.id}.mp3"
+                                with open(temp_audio, 'wb') as f:
+                                    f.write(audio_data)
+                                
+                                # Play audio
+                                voice_client.play(
+                                    discord.FFmpegPCMAudio(temp_audio),
+                                    after=lambda e: os.remove(temp_audio) if os.path.exists(temp_audio) else None
+                                )
+                                logger.info(f"Playing TTS audio in voice channel")
+                        except Exception as e:
+                            logger.error(f"Error playing TTS: {e}")
             else:
                 await status_msg.edit(content="_[Response contained only thinking process]_")
         else:
