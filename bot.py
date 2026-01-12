@@ -13,6 +13,7 @@ import io
 import logging
 from logging.handlers import RotatingFileHandler
 import asyncio
+import re
 
 # Load environment variables from .env file
 load_dotenv()
@@ -221,21 +222,18 @@ def estimate_tokens(text: str) -> int:
 
 def remove_thinking_tags(text: str) -> str:
     """Remove thinking tags and box markers from reasoning model outputs."""
-    import re
-    
     if not HIDE_THINKING:
         return text
     
+    # Remove standard tags
     cleaned = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL | re.IGNORECASE)
     cleaned = re.sub(r'\[THINK\].*?\[/THINK\]', '', cleaned, flags=re.DOTALL | re.IGNORECASE)
-    cleaned = re.sub(r'<think\s*/>', '', cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r'\[THINK\s*/\]', '', cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r'<\|begin_of_box\|>', '', cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r'<\|end_of_box\|>', '', cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)
-    cleaned = cleaned.strip()
+    cleaned = re.sub(r'<think\s*/>|\[THINK\s*/\]', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'<\|begin_of_box\|>|<\|end_of_box\|>', '', cleaned, flags=re.IGNORECASE)
     
-    return cleaned
+    # Clean up whitespace: remove triple newlines and leading/trailing gaps
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    return cleaned.strip()
 
 def is_inside_thinking_tags(text: str) -> bool:
     """Check if we're currently inside an unclosed thinking tag."""
@@ -424,90 +422,46 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
     """Send a message to LMStudio API with conversation history and return the response."""
     start_time = time.time()
     
-    # Get the selected model for this guild
-    model_to_use = default_model
-    if guild_id and guild_id in selected_models:
-        model_to_use = selected_models[guild_id]
-    elif available_models:
-        model_to_use = available_models[0]
+    model_to_use = selected_models.get(guild_id, default_model) if guild_id else default_model
     
+    # Initial Context Loading
     if len(conversation_histories[conversation_id]) == 0 and not context_loaded[conversation_id] and CONTEXT_MESSAGES > 0:
         recent_context = await get_recent_context(channel, CONTEXT_MESSAGES)
         conversation_histories[conversation_id].extend(recent_context)
         context_loaded[conversation_id] = True
-        logger.info(f"Loaded {len(recent_context)} context messages")
-    
-    if images and len(images) > 0:
-        message_content = []
-        
-        if message_text.strip():
-            message_content.append({"type": "text", "text": message_text})
-        else:
-            message_content.append({"type": "text", "text": "What's in this image?"})
-        
-        message_content.extend(images)
-        
-        conversation_histories[conversation_id].append({
-            "role": "user",
-            "content": message_content
-        })
-    else:
-        conversation_histories[conversation_id].append({
-            "role": "user",
-            "content": message_text
-        })
-    
-    is_dm = isinstance(channel, discord.DMChannel)
-    if is_dm:
-        context_type = f"DM from {username} (ID: {conversation_id})"
-    else:
-        channel_name = getattr(channel, 'name', 'Unknown')
-        guild_name = getattr(channel.guild, 'name', 'Unknown') if hasattr(channel, 'guild') else 'Unknown'
-        context_type = f"#{channel_name} in {guild_name} - User: {username}"
-    
-    image_info = f" [with {len(images)} image(s)]" if images and len(images) > 0 else ""
-    logger.info(f"[{context_type}]{image_info}")
-    logger.info(f"Message: {message_text}")
-    logger.info(f"Using model: {model_to_use}")
-    
-    if len(conversation_histories[conversation_id]) > MAX_HISTORY * 2:
-        conversation_histories[conversation_id] = conversation_histories[conversation_id][-(MAX_HISTORY * 2):]
-    
-    api_messages = []
 
+    # Prepare current message
+    current_content = message_text
+    if images and len(images) > 0:
+        current_content = [{"type": "text", "text": message_text or "What's in this image?"}] + images
+
+    conversation_histories[conversation_id].append({"role": "user", "content": current_content})
+    
     # ------------------------------------------------------------------
-    # ✅ INSERT SYSTEM PROMPT (per guild, persisted)
+    # ✅ IMPROVED: MESSAGE MERGING & SYSTEM PROMPT INJECTION
     # ------------------------------------------------------------------
+    api_messages = []
+    
+    # Add System Prompt first
     if guild_id and guild_id in guild_settings:
-        system_prompt = guild_settings[guild_id].get("system_prompt")
-        if system_prompt:
-            api_messages.append({
-                "role": "system",
-                "content": system_prompt
-            })
-    # ------------------------------------------------------------------
-    
+        sys_prompt = guild_settings[guild_id].get("system_prompt")
+        if sys_prompt:
+            api_messages.append({"role": "system", "content": sys_prompt})
+
+    # Merge history to prevent consecutive same-role messages
     for msg in conversation_histories[conversation_id]:
-        current_role = msg["role"]
-        
-        if api_messages:
-            last_role = api_messages[-1]["role"]
-            
-            if current_role == last_role:
-                if current_role == "user":
-                    api_messages.append({"role": "assistant", "content": "Understood."})
-                else:
-                    continue
-        
-        api_messages.append(msg)
-    
-    if api_messages and api_messages[-1]["role"] == "assistant":
-        api_messages.pop()
-    
-    logger.debug(f"Sending {len(api_messages)} messages to API:")
-    for i, msg in enumerate(api_messages):
-        content_preview = str(msg["content"])[:100] if isinstance(msg["content"], str) else f"[complex content with {len(msg['content'])} parts]"
-        logger.debug(f"  {i+1}. {msg['role']}: {content_preview}")
+        if api_messages and api_messages[-1]["role"] == msg["role"]:
+            # If both are strings, merge them. If complex (images), keep separate or handle as needed
+            if isinstance(api_messages[-1]["content"], str) and isinstance(msg["content"], str):
+                api_messages[-1]["content"] += f"\n\n{msg['content']}"
+            else:
+                api_messages.append(msg) # Fallback for complex types
+        else:
+            api_messages.append(msg.copy())
+
+    # Limit history size
+    if len(api_messages) > MAX_HISTORY * 2:
+        api_messages = api_messages[-(MAX_HISTORY * 2):]
     
     payload = {
         "model": model_to_use,
@@ -522,59 +476,32 @@ async def query_lmstudio(conversation_id: int, message_text: str, channel, usern
             async with session.post(LMSTUDIO_URL, json=payload) as response:
                 if response.status == 200:
                     assistant_message = ""
-                    
                     async for line in response.content:
                         line = line.decode('utf-8').strip()
                         if line.startswith('data: '):
                             data_str = line[6:]
-                            if data_str == '[DONE]':
-                                break
+                            if data_str == '[DONE]': break
                             try:
                                 data = json.loads(data_str)
-                                if 'choices' in data and len(data['choices']) > 0:
-                                    delta = data['choices'][0].get('delta', {})
-                                    content = delta.get('content', '')
-                                    if content:
-                                        assistant_message += content
-                                        yield content
-                            except json.JSONDecodeError:
-                                continue
+                                content = data['choices'][0].get('delta', {}).get('content', '')
+                                if content:
+                                    assistant_message += content
+                                    yield content
+                            except: continue
                     
+                    # Store final response in history
+                    conversation_histories[conversation_id].append({"role": "assistant", "content": assistant_message})
+                    
+                    # Stats tracking
                     response_time = time.time() - start_time
-                    
-                    logger.info(f"Full Response (with thinking): {assistant_message}")
-                    
-                    assistant_message_filtered = remove_thinking_tags(assistant_message)
-                    
-                    logger.info(f"Filtered Response (shown to user): {assistant_message_filtered}")
-                    logger.info(f"Response time: {response_time:.2f}s")
-                    
-                    if HIDE_THINKING and assistant_message != assistant_message_filtered:
-                        logger.info(f"Thinking tags removed. Original length: {len(assistant_message)}, Filtered length: {len(assistant_message_filtered)}")
-                    
-                    conversation_histories[conversation_id].append({
-                        "role": "assistant",
-                        "content": assistant_message
-                    })
-                    
                     stats = channel_stats[conversation_id]
                     stats['total_messages'] += 2
-                    stats['total_tokens_estimate'] += estimate_tokens(message_text) + estimate_tokens(assistant_message)
-                    stats['last_message_time'] = datetime.now()
                     stats['response_times'].append(response_time)
                 else:
-                    error_text = await response.text()
-                    logger.error(f"LMStudio API error: {response.status} - {error_text}")
-                    conversation_histories[conversation_id].pop()
                     yield f"Error: LMStudio API returned status {response.status}"
-    except aiohttp.ClientError as e:
-        logger.error(f"Connection error to LMStudio: {e}")
-        conversation_histories[conversation_id].pop()
-        yield "Error: Could not connect to LMStudio. Is it running?"
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        conversation_histories[conversation_id].pop()
-        yield f"Error: {str(e)}"
+        logger.error(f"Request error: {e}")
+        yield "Error: Connection to LMStudio failed."
 
 @bot.tree.command(name='reset', description='Reset the conversation history for this channel or DM')
 async def reset_conversation(interaction: discord.Interaction):
@@ -1275,17 +1202,19 @@ async def on_message(message):
                             audio_data = await text_to_speech(final_response, guild_voice)
                             
                             if audio_data:
-                                # Save audio to temporary file
-                                temp_audio = f"temp_tts_{message.guild.id}.mp3"
+                                # ✅ IMPROVED: Unique filename to prevent access errors
+                                ts = int(time.time())
+                                temp_audio = f"temp_tts_{message.guild.id}_{ts}.mp3"
                                 with open(temp_audio, 'wb') as f:
                                     f.write(audio_data)
                                 
-                                # Play audio
-                                voice_client.play(
-                                    discord.FFmpegPCMAudio(temp_audio),
-                                    after=lambda e: os.remove(temp_audio) if os.path.exists(temp_audio) else None
-                                )
-                                logger.info(f"Playing TTS audio in voice channel")
+                                def cleanup(error):
+                                    if os.path.exists(temp_audio):
+                                        try: os.remove(temp_audio)
+                                        except: pass
+
+                                voice_client.play(discord.FFmpegPCMAudio(temp_audio), after=cleanup)
+                                logger.info(f"Playing TTS audio for guild {message.guild.id}")
                         except Exception as e:
                             logger.error(f"Error playing TTS: {e}")
             else:
