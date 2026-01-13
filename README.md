@@ -1,92 +1,92 @@
 <div align="center"> 
-<h1></h1>🤖 Discord AI Bot with LMStudio Integration</div></h1><br>
-<br>
-A powerful, modular Discord bot with local AI integration via LMStudio, featuring web search, file processing, text-to-speech, and comprehensive server configuration.<br>
-Features • Quick Start • Commands • Configuration • Development<br>
+<h1>🤖 Discord AI Bot with LMStudio Integration</h1>
+<h2>A powerful, modular Discord bot with local AI integration via LMStudio, featuring web search, file processing, text-to-speech, and comprehensive server configuration.</h2>
+<h3>Features • Quick Start • Commands • Configuration • Development</h3>
 </div> 
 <hr>
-✨ Features<br>
-
-🧠 AI Capabilities<br>
-•	✅ Local LLM Integration via LMStudio API<br>
-•	✅ Model Selection - Switch between loaded models per server<br>
-•	✅ Context-Aware Conversations - Maintains conversation history<br>
-•	✅ Reasoning Model Support - Handles <think> tags automatically<br>
-🔍 Enhanced Input Processing<br>
-•	✅ Web Search - Automatic DuckDuckGo search when needed<br>
-•	✅ URL Content Fetching - Extracts text from provided URLs<br>
-•	✅ Image Processing - Vision model support for images<br>
-•	✅ PDF Processing - Extracts and reads PDF content<br>
-•	✅ Text File Support - Reads code files, documents, etc.<br>
-🎙️ Voice & TTS<br>
-•	✅ Voice Channel Integration - Bot joins and speaks in voice channels<br>
-•	✅ Multiple Voices - 6 OpenAI-compatible voices (AllTalk TTS)<br>
-•	✅ Auto-Disconnect - Leaves when alone in voice channel<br>
-⚙️ Server Configuration<br>
-•	✅ Custom System Prompts - Per-server AI personality<br>
-•	✅ Temperature Control - Adjust response creativity<br>
-•	✅ Token Limits - Control response length<br>
-•	✅ Debug Logging - Per-server debug modes<br>
-•	✅ Web Search Toggle - Enable/disable per server<br>
-📊 Statistics & Management<br>
-•	✅ Conversation Stats - Track tokens, response times, messages<br>
-•	✅ History Management - Clear, reset, or view conversation history<br>
-•	✅ Persistent Storage - Stats and settings saved across restarts<br>
-<hr>
+<h4>✨ Features</h4>
+<br>
+<b>🧠 AI Capabilities</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Local LLM Integration via LMStudio API<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Model Selection - Switch between loaded models per server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Context-Aware Conversations - Maintains conversation history<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Reasoning Model Support - Handles <think> tags automatically<br>
+<b>🔍 Enhanced Input Processing</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Web Search - Automatic DuckDuckGo search when needed<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ URL Content Fetching - Extracts text from provided URLs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Image Processing - Vision model support for images<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ PDF Processing - Extracts and reads PDF content<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Text File Support - Reads code files, documents, etc.<br>
+<b>🎙️ Voice & TTS</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Voice Channel Integration - Bot joins and speaks in voice channels<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Multiple Voices - 6 OpenAI-compatible voices (AllTalk TTS)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Auto-Disconnect - Leaves when alone in voice channel<br>
+<b>⚙️ Server Configuration</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Custom System Prompts - Per-server AI personality<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Temperature Control - Adjust response creativity<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Token Limits - Control response length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Debug Logging - Per-server debug modes<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Web Search Toggle - Enable/disable per server<br>
+<b>📊 Statistics & Management</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Conversation Stats - Track tokens, response times, messages<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ History Management - Clear, reset, or view conversation history<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Persistent Storage - Stats and settings saved across restarts<br>
+<br><hr><br>
+<pre>
 📁 Project Structure<br>
 discord_bot/<br>
-│<br>
-├── 📄 bot.py                  # Main entry point<br>
-├── 📄 requirements.txt        # Python dependencies<br>
-├── 📄 .env                    # Configuration<br>
-│<br>
-├── 📁 config/                 # Settings and constants<br>
-│   ├── settings.py<br>
-│   ├── constants.py<br>
-│   └── __init__.py<br>
-│<br>
-├── 📁 utils/                  # Helper functions<br>
-│   ├── logging_config.py<br>
-│   ├── text_utils.py<br>
-│   ├── stats_manager.py<br>
-│   ├── guild_settings.py<br>
-│   └── __init__.py<br>
-│<br>
-├── 📁 services/               # Business logic<br>
-│   ├── lmstudio.py           # LMStudio API integration<br>
-│   ├── tts.py                # Text-to-speech<br>
-│   ├── search.py             # Web search<br>
-│   ├── content_fetch.py      # URL content fetching<br>
-│   ├── file_processor.py     # File processing<br>
-│   └── __init__.py<br>
-│<br>
-├── 📁 commands/               # Slash commands<br>
-│   ├── conversation.py       # /reset, /history<br>
-│   ├── stats.py              # /stats commands<br>
-│   ├── voice.py              # /join, /leave, /voice<br>
-│   ├── model.py              # /model selection<br>
-│   ├── config_cmd.py         # /config command<br>
-│   ├── help.py               # /help command<br>
-│   └── __init__.py<br>
-│<br>
-└── 📁 core/                   # Bot core<br>
-    ├── bot_instance.py       # Bot setup<br>
-    ├── events.py             # Event handlers<br>
-    └── __init__.py<br>
-<br>
+│
+├── 📄 bot.py                  # Main entry point
+├── 📄 requirements.txt        # Python dependencies
+├── 📄 .env                    # Configuration
+│
+├── 📁 config/                 # Settings and constants
+│   ├── settings.py
+│   ├── constants.py
+│   └── __init__.py
+│
+├── 📁 utils/                  # Helper functions
+│   ├── logging_config.py
+│   ├── text_utils.py
+│   ├── stats_manager.py
+│   ├── guild_settings.py
+│   └── __init__.py
+│
+├── 📁 services/              # Business logic
+│   ├── lmstudio.py           # LMStudio API integration
+│   ├── tts.py                # Text-to-speech
+│   ├── search.py             # Web search
+│   ├── content_fetch.py      # URL content fetching
+│   ├── file_processor.py     # File processing
+│   └── __init__.py
+│
+├── 📁 commands/              # Slash commands
+│   ├── conversation.py       # /reset, /history
+│   ├── stats.py              # /stats commands
+│   ├── voice.py              # /join, /leave, /voice
+│   ├── model.py              # /model selection
+│   ├── config_cmd.py         # /config command
+│   ├── help.py               # /help command
+│   └── __init__.py
+│
+└── 📁 core/                  # Bot core
+    ├── bot_instance.py       # Bot setup
+    ├── events.py             # Event handlers
+    └── __init__.py
+</pre>
 <hr>
-🚀 Quick Start<br>
-Prerequisites<br>
-Requirement	Version	Link<br>
-Python	3.8+	Download<br>
-<br>
-Discord Bot	Token Required	Create Bot<br>
-<br>
-LMStudio	Latest	Download<br>
-<br>
-AllTalk TTS	Optional	Download<br>
-<br>
-Installation<br>
+<pre>
+<h4>🚀 Quick Start</h4>
+<b>Prerequisites</b>
+    
+<b>Requirement        Version            Link</b>
+Python             3.8+               <a href="https://www.python.org/downloads/">Download</a>
+Discord Bot        Token Required     <a href="https://discord.com/developers/applications">Create Bot</a>
+LMStudio           Latest             <a href="https://lmstudio.ai/">Download</a>
+AllTalk TTS        Optional           <a href="https://github.com/erew123/alltalk_tts/tree/alltalkbeta">Download</a>
+</pre>
+    
+<b>Installation</b><br>
 <details> <summary><b>📥 Step 1: Clone Repository</b></summary> <br>
 # Clone or download the repository<br>
 git clone https://github.com/Garry-Marshall/Jarvis<br>
@@ -98,16 +98,18 @@ python -m venv venv<br>
 # Activate virtual environment<br>
 # On Linux/Mac:<br>
 source venv/bin/activate<br>
+<br>
 # On Windows:<br>
 venv\Scripts\activate<br>
 </details> <details> <summary><b>📦 Step 2: Install Dependencies</b></summary> <br>
 pip install -r requirements.txt<br>
 </details> <details> <summary><b>⚙️ Step 3: Configure Bot</b></summary> <br>
 Create a .env file in the project root:<br>
+<br>
 # REQUIRED: Your Discord bot token<br>
 DISCORD_BOT_TOKEN=your-bot-token-here<br>
 <br>
-# REQUIRED: Comma-separated channel IDs where bot should respond<br>
+'#' REQUIRED: Comma-separated channel IDs where bot should respond<br>
 DISCORD_CHANNEL_IDS=123456789012345678,987654321098765432<br>
 <br>
 # LMStudio API (default: localhost)<br>
@@ -136,6 +138,8 @@ HIDE_THINKING=true<br>
 ENABLE_TTS=true<br>
 ALLTALK_URL=http://127.0.0.1:7851<br>
 ALLTALK_VOICE=alloy<br>
+<br>
+    
 </details> <details> <summary><b>🔑 Step 4: Get Channel IDs</b></summary> <br>
 1.	Enable Developer Mode in Discord <br>
 o	Settings → Advanced → Developer Mode ✅<br>
@@ -145,14 +149,15 @@ o	Multiple channels: comma-separated<br>
 </details> <details> <summary><b>▶️ Step 5: Run the Bot</b></summary> <br>
 python bot.py<br>
 Expected output:<br>
-2024-01-13 10:00:00 [INFO] Bot has connected to Discord!<br>
-2024-01-13 10:00:00 [INFO] Loaded LM Studio model(s): ['llama-2-7b']<br>
-2024-01-13 10:00:00 [INFO] Synced 10 slash command(s)<br>
-✅ Success! Your bot is now online.<br>
+
+`2026-01-13 10:00:00 [INFO] Bot has connected to Discord!`<br>
+`2026-01-13 10:00:00 [INFO] Loaded LM Studio model(s): ['llama-2-7b']`<br>
+`2026-01-13 10:00:00 [INFO] Synced 10 slash command(s)`<br>
+`✅ Success! Your bot is now online.`<br>
 </details> <br>
 <hr>
-📖 Usage<br>
-💬 Basic Conversation<br>
+<h4>📖 Usage</h4>
+<b>💬 Basic Conversation</b><br>
 <table> <tr> <td width="30%"><b>Action</b></td> <td width="70%"><b>Example</b></td> </tr> <tr> <td>Simple message</td> <td> 
 User: What is the weather like today?<br>
 Bot: 🤔 Thinking...<br>
@@ -166,53 +171,77 @@ User: [uploads report.pdf] Summarize this document<br>
 Bot: This document discusses quarterly sales performance,<br>
      highlighting a 23% increase in revenue...<br>
 </td> </tr> </table> 
-🎮 Slash Commands<br>
-🗨️ Conversation Management<br>
-Command	Description	Usage<br>
-/reset	Clear conversation history	/reset<br>
-/history	Show conversation length	/history<br>
-/stats	Display detailed statistics	/stats<br>
-/stats_reset	Reset statistics	/stats_reset<br>
-⚙️ Configuration<br>
+
+<h4>🎮 Slash Commands</h4>
+<b>🗨️ Conversation Management</b><br>
+<br>
+<pre>
+<b>Command       Description                        Usage</b>
+
+<b>/reset</b>        Clear conversation history        /reset
+<b>/history</b>      Show conversation length          /history
+<b>/stats</b>        Display detailed statistics       /stats
+<b>/stats_reset</b>  Reset statistics                  /stats_reset
+
+</pre>
+
+<b>⚙️ Configuration</b><br>
 Note: Commands marked with 🔒 require Administrator permissions<br>
-Command	Description	Example<br>
-/config show show	View all settings	/config show show<br>
-/config system set 🔒	Set custom system prompt	/config system set You are a helpful coding assistant<br>
-/config system show	View current system prompt	/config system show<br>
-/config system clear 🔒	Reset to default prompt	/config system clear<br>
-/config temperature set 🔒	Adjust creativity (0.0-2.0)	/config temperature set 0.8<br>
-/config temperature show	View current temperature	/config temperature show<br>
-/config max_tokens set 🔒	Limit response length	/config max_tokens set 2000<br>
-/config max_tokens show	View current limit	/config max_tokens show<br>
-/config debug on/off 🔒	Toggle debug logging	/config debug on<br>
-/config search on/off 🔒	Toggle web search	/config search off<br>
-/config clear last	Remove last interaction	/config clear last<br>
-🧠 Model & Voice<br>
-Command	Description<br>
-/model	Select AI model from dropdown menu<br>
-/voice	Choose TTS voice (alloy, echo, fable, nova, onyx, shimmer)<br>
-/join	Join your current voice channel<br>
-/leave	Leave voice channel<br>
-❓ Help<br>
-Command	Description<br>
-/help	Show all commands and usage instructions<br>
+<br>
+<pre>
+<b>Command                        Description                Example</b>
+/config show                    View all settings            /config show
+/config system set 🔒          Set custom system prompt      /config system set You are a helpful coding assistant
+/config system show             View current system prompt   /config system show
+/config system clear 🔒        Reset to default prompt       /config system clear
+/config temperature set 🔒	   Adjust creativity (0.0-2.0)   /config temperature set 0.8
+/config temperature show       View current temperature      /config temperature show
+/config max_tokens set 🔒      Limit response length         /config max_tokens set 2000
+/config max_tokens show        View current limit            /config max_tokens show
+/config debug on|off 🔒       Toggle debug logging           /config debug on
+/config search on|off 🔒      Toggle web search              /config search off
+/config clear last             Remove last interaction       /config clear last
+</pre>
+<br>
+<h4>🧠 Model & Voice</h4>
+<b>Command	Description</b><br>
+<pre>
+/model        Select AI model from dropdown menu
+/voice        Choose TTS voice (alloy, echo, fable, nova, onyx, shimmer)
+/join         Join your current voice channel
+/leave        Leave voice channel
+</pre>
+<br>
+<h4>❓ Help</h4>
+<b>Command	Description</b>b><br>
+<pre>
+/help         Show all commands and usage instructions
+</pre>
 <hr>
-🔧 Advanced Configuration<br>
+<h4>🔧 Advanced Configuration</h4>
 <details> <summary><b>🧠 Custom System Prompts</b></summary> <br>
+<pre>
 Set a unique personality per server:<br>
-/config system set You are a helpful coding assistant specializing in Python and JavaScript. Always provide code examples and explain your reasoning.<br>
-Examples:<br>
-•	Customer Support: You are a friendly customer support agent. Be empathetic and solution-focused.<br>
-•	Tutor: You are an experienced teacher. Explain concepts clearly with examples and analogies.<br>
-•	Creative Writer: You are a creative writing assistant. Help with storytelling, character development, and plot ideas.<br>
+/config system set You are a helpful coding assistant specializing in Python and JavaScript. Always provide code examples and explain your reasoning.
+
+Examples:
+•	Customer Support: You are a friendly customer support agent. Be empathetic and solution-focused.
+•	Tutor: You are an experienced teacher. Explain concepts clearly with examples and analogies.
+•	Creative Writer: You are a creative writing assistant. Help with storytelling, character development, and plot ideas.
+</pre>
 </details> <details> <summary><b>🌡️ Temperature Settings</b></summary> <br>
-Control response creativity and randomness:<br>
-Temperature	Behavior	Best For<br>
-0.0 - 0.3	Focused, deterministic	Code, facts, technical content<br>
-0.4 - 0.7	Balanced (default: 0.7)	General conversation<br>
-0.8 - 1.2	Creative, varied	Brainstorming, creative writing<br>
-1.3 - 2.0	Highly creative, unpredictable	Experimental, artistic content<br>
-/config temperature set 0.8<br>
+<pre>
+Control response creativity and randomness:
+    
+<b>Temperature        Behavior                        Best For</b>
+0.0 - 0.3          Focused, deterministic          Code, facts, technical content
+0.4 - 0.7          Balanced (default: 0.7)         General conversation
+0.8 - 1.2          Creative, varied                Brainstorming, creative writing
+1.3 - 2.0          Highly creative, unpredictable  Experimental, artistic content
+
+/config temperature set 0.8
+</pre>
+
 </details> <details> <summary><b>📝 Token Limits</b></summary> <br>
 Control maximum response length:<br>
 # Limit to 2000 tokens<br>
@@ -241,7 +270,7 @@ Debug info includes:<br><br>
 •	Token counts and timing<br>
 •	Search context details<br>
 •	Error stack traces<br>
-</details> <details> <summary><b>🔍 Web Search Control</b></summary> <br>
+</details> <details> <summary><b>🔍 Web Search Control</b></summary> 
 Toggle automatic web search per server:<br>
 # Disable web search<br>
 /config search off<br>
@@ -256,190 +285,210 @@ Search Triggers: The bot automatically searches when messages contain phrases li
 •	"what's the latest..."<br>
 •	"current news about..."<br>
 •	"weather in..."<br>
-</details> <br>
+</details>
 <hr>
-🛠️ Development<br>
-Project Architecture<br>
-graph TD
-    A[bot.py - Entry Point] --> B[core/events.py]
-    B --> C[commands/]
-    B --> D[services/]
-    D --> E[LMStudio API]
-    D --> F[Web Search]
-    D --> G[TTS Service]
-    C --> H[utils/]
-    D --> H
-    H --> I[Stats Manager]
-    H --> J[Guild Settings]
-<details> <summary><b>📦 Package Details</b></summary> <br>
-Package	Purpose	Key Files<br>
-config/	Configuration management	settings.py, constants.py<br>
-utils/	Helper functions	text_utils.py, stats_manager.py, guild_settings.py<br>
-services/	Business logic	lmstudio.py, tts.py, search.py, file_processor.py<br>
-commands/	Slash commands	All command handlers<br>
-core/	Bot core	bot_instance.py, events.py<br>
-</details> <br>
-<br>
-🐛 Troubleshooting<br>
-<details> <summary><b>Bot doesn't respond to messages</b></summary> <br>
-Possible causes:<br>
-1.	Wrong channel IDs<br>
-2.	# Check your .env file<br>
-3.	DISCORD_CHANNEL_IDS=123456789012345678<br>
-4.	<br>
-5.	# Verify in logs:<br>
-6.	# Should see: "Listening in X channel(s)"<br>
-7.	Missing permissions<br>
-o	Bot needs: Read Messages, Send Messages, Embed Links, Attach Files<br>
-o	Check in Server Settings → Roles → Your Bot Role<br>
-8.	Bot not in channel<br>
-o	Ensure bot was invited with correct permissions<br>
-o	Re-invite with this URL (replace CLIENT_ID):<br>
-9.	https://discord.com/api/oauth2/authorize?client_id=CLIENT_ID&permissions=412317273088&scope=bot%20applications.commands<br>
-</details> <details> <summary><b>"No models found in LMStudio"</b></summary> <br>
-Solution:<br>
-1.	Open LMStudio application<br>
-2.	Navigate to "Models" tab<br>
-3.	Click "Load Model" for your desired model<br>
-4.	Wait for model to fully load (status bar shows 100%)<br>
-5.	Restart the Discord bot<br>
-Verify:<br>
-# You should see in logs:<br>
-[INFO] Loaded LM Studio model(s): ['your-model-name']<br>
-</details> <details> <summary><b>Import errors / Module not found</b></summary> <br>
-Cause: Running from wrong directory or missing __init__.py files<br>
-Solution:<br>
-# Always run from project root<br>
-cd Jarvis<br>
-python bot.py<br>
-<br>
-# NOT from subdirectories:<br>
-# ❌ cd Jarvis/core && python ../bot.py<br>
-<br>
-# Ensure all __init__.py files exist:<br>
-touch config/__init__.py<br>
-touch utils/__init__.py<br>
-touch services/__init__.py<br>
-touch commands/__init__.py<br>
-touch core/__init__.py<br>
-</details> <details> <summary><b>Slash commands not appearing</b></summary> <br>
-Solution:<br>
-1.	Wait 1 hour - Discord caches slash commands globally<br>
-2.	Refresh Discord – Press CTRL-D in Discord.<br>
-3.	Check logs for sync errors: <br>
-4.	[INFO] Synced 10 slash command(s)<br>
-5.	Test in DM - Slash commands appear faster in DMs<br>
-</details> <details> <summary><b>Permission errors</b></summary> <br>
-Required bot permissions:<br>
-Permission	Why Needed<br>
-View Channels	See messages<br>
-Send Messages	Respond to users<br>
-Embed Links	Rich formatting<br>
-Attach Files	Send images/files<br>
-Read Message History	Load context<br>
-Use Slash Commands	Execute commands<br>
-Connect	Join voice (optional)<br>
-Speak	TTS playback (optional)<br>
-Bot invite URL template:<br>
-https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=412317273088&scope=bot%20applications.commands<br>
-</details> <details> <summary><b>Voice/TTS not working</b></summary> <br>
-Checklist:<br>
-•	[ ] ENABLE_TTS=true in .env<br>
-•	[ ] AllTalk TTS running at ALLTALK_URL<br>
-•	[ ] Bot is in voice channel (/join)<br>
-•	[ ] Bot has Connect and Speak permissions<br>
-•	[ ] FFmpeg installed (required for audio playback)<br>
-Install FFmpeg:<br>
-# Ubuntu/Debian<br>
-sudo apt-get install ffmpeg<br>
-<br>
-# macOS<br>
-brew install ffmpeg<br>
-<br>
-# Windows<br>
-# Download from: https://ffmpeg.org/download.html<br>
-<br>
+
+<h4>🐛 Troubleshooting</h4>
+<details> <summary><b>Bot doesn't respond to messages</b></summary> 
+<pre>
+<b>Possible causes:</b>
+1.	Wrong channel IDs
+2.	# Check your .env file
+3.	DISCORD_CHANNEL_IDS=123456789012345678
+4.	
+5.	# Verify in logs:
+6.	# Should see: "Listening in X channel(s)"
+7.	Missing permissions
+o	Bot needs: Read Messages, Send Messages, Embed Links, Attach Files
+o	Check in Server Settings → Roles → Your Bot Role
+8.	Bot not in channel
+    o	Ensure bot was invited with correct permissions
+    o	Re-invite with this URL (replace CLIENT_ID):
+9.	https://discord.com/api/oauth2/authorize?client_id=CLIENT_ID&permissions=412317273088&scope=bot%20applications.commands
+</pre>
+</details>
+
+<details> <summary><b>"No models found in LMStudio"</b></summary>
+<pre>
+<b>Solution:</b>
+1.	Open LMStudio application
+2.	Navigate to "Models" tab
+3.	Click "Load Model" for your desired model
+4.	Wait for model to fully load (status bar shows 100%)
+5.	Restart the Discord bot
+Verify:
+-> You should see in logs:
+[INFO] Loaded LM Studio model(s): ['your-model-name']
+</pre>
+</details>
+
+<details> <summary><b>Import errors / Module not found</b></summary>
+<pre>
+<b>Cause: Running from wrong directory or missing __init__.py files</b>
+<b>Solution:</b>
+-> Always run from project root
+        cd Jarvis
+        python bot.py
+
+-> Ensure all __init__.py files exist:
+touch config/__init__.py
+touch utils/__init__.py
+touch services/__init__.py
+touch commands/__init__.py
+touch core/__init__.py
+</pre>
+</details>
+
+<details> <summary><b>Slash commands not appearing</b></summary>
+<pre>
+<b>Solution:</b>
+1.	Refresh Discord – Press CTRL-R in Discord.
+2.	Wait 1 hour - Discord caches slash commands globally
+3.	Check logs for sync errors: 
+4.	[INFO] Synced 10 slash command(s)
+5.	Test in DM - Slash commands appear faster in DMs
+</pre>
+</details>
+
+<details> <summary><b>Permission errors</b></summary> 
+<pre>
+<b>Required bot permissions:</b>
+
+<b>Permission        	     Why Needed</b>
+View Channels            See messages
+Send Messages            Respond to users
+Embed Links              Rich formatting
+Attach Files             Send images/files
+Read Message History	 Load context
+Use Slash Commands	     Execute commands
+Connect	                 Join voice
+Speak	                 TTS playback
+
+<b>Bot invite URL template:</b>
+https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=412317273088&scope=bot%20applications.commands
+</pre>
+</details>
+
+<details> <summary><b>Voice/TTS not working</b></summary>
+<pre>
+Checklist:
+    •	[ ] ENABLE_TTS=true in .env
+    •	[ ] AllTalk TTS running at ALLTALK_URL
+    •	[ ] Bot is in voice channel (/join)
+    •	[ ] Bot has Connect and Speak permissions
+    •	[ ] FFmpeg installed (required for audio playback)
+
+Install FFmpeg:
+
+<b>-> Ubuntu/Debian</b>
+    sudo apt-get install ffmpeg
+
+<b>-> macOS</b>
+    brew install ffmpeg
+
+<b>-> Windows</b>
+    Download from: https://ffmpeg.org/download.html
+</pre>
+</details>
+
 <hr>
-📊 Statistics Files<br>
-The bot automatically creates and maintains these files:<br>
-File	Purpose	Can Delete?<br>
-channel_stats.json	Conversation statistics (tokens, times, messages)	✅ Yes - Will recreate with defaults<br>
-guild_settings.json	Server configurations (prompts, temperature, etc.)	⚠️ Caution - Settings will be lost<br>
-Logs/bot_*.log	Daily log files	✅ Yes - Old logs can be deleted<br>
-Example stats structure:<br>
-{<br>
-  "123456789": {<br>
-    "total_messages": 42,<br>
-    "prompt_tokens_estimate": 15230,<br>
-    "response_tokens_cleaned": 8450,<br>
-    "average_response_time": 2.3<br>
-  }<br>
-}<br>
+<h4>📊 Statistics Files</h4>
+<pre>
+The bot automatically creates and maintains these files:
+
+<b>File                        Purpose                                                Can Delete?</b>
+channel_stats.json          Conversation statistics (tokens, times, messages)      ✅ Yes - Will recreate with defaults
+guild_settings.json         Server configurations (prompts, temperature, etc.)     ⚠️ Caution - Settings will be lost
+Logs/bot_*.log              Daily log files                                        ✅ Yes - Old logs can be deleted
+
+Example stats structure:
+  "123456789": {
+    "total_messages": 42,
+    "prompt_tokens_estimate": 15230,
+    "response_tokens_cleaned": 8450,
+    "average_response_time": 2.3
+  }
+</pre>
 <hr>
-🔒 Security Best Practices<br>
-⚠️ IMPORTANT: Follow these security guidelines<br>
-Environment Variables<br>
-•	✅ DO: Keep .env file in .gitignore<br>
-•	✅ DO: Use separate tokens for dev/production<br>
-•	❌ DON'T: Commit .env to version control<br>
-•	❌ DON'T: Share your bot token publicly<br>
-Token Exposed?<br>
-If your bot token is accidentally exposed:<br>
-1.	Immediately regenerate in Discord Developer Portal<br>
-2.	Update .env with new token<br>
-3.	Restart bot<br>
-4.	Review bot's recent activity<br>
-Permissions<br>
-•	Principle of least privilege: Only grant permissions the bot actually needs<br>
-•	Review regularly: Audit bot permissions in all servers<br>
-•	Test in dev server first: Before adding new features<br>
-Rate Limiting<br>
-The bot includes built-in rate limiting for:<br>
-•	Web searches (10s cooldown per server)<br>
-•	API requests (handled by discord.py)<br>
+<h4>🔒 Security Best Practices</h4>
+<pre>
+⚠️ IMPORTANT: Follow these security guidelines
+    
+<b>Environment Variables</b>
+    •	✅ DO: Keep .env file in .gitignore
+    •	✅ DO: Use separate tokens for dev/production
+    •	❌ DON'T: Commit .env to version control
+    •	❌ DON'T: Share your bot token publicly
+
+<b>Token Exposed?</b>
+If your bot token is accidentally exposed:
+    1.	Immediately regenerate in Discord Developer Portal
+    2.	Update .env with new token
+    3.	Restart bot
+    4.	Review bot's recent activity
+    
+<b>Permissions</b>
+    •	Principle of least privilege: Only grant permissions the bot actually needs
+    •	Review regularly: Audit bot permissions in all servers
+    •	Test in dev server first: Before adding new features
+
+<b>Rate Limiting</b>
+The bot includes built-in rate limiting for:
+    •	Web searches (10s cooldown per server)
+    •	API requests (handled by discord.py)
+</pre>
 <hr>
-🤝 Contributing<br>
+<h4>🤝 Contributing</h4>
 We welcome contributions! Here's how to help:<br>
+<br>    
 Reporting Issues<br>
-<details> <summary><b>🐛 Bug Reports</b></summary> <br>
-Please include:<br>
-•	Bot version or commit hash<br>
-•	Python version: python --version<br>
-•	OS: Windows/Mac/Linux<br>
-•	Error logs from Logs/ directory<br>
-•	Steps to reproduce<br>
-</details> <details> <summary><b>💡 Feature Requests</b></summary> <br>
-Describe:<br>
-•	Use case: What problem does this solve?<br>
-•	Proposed solution: How should it work?<br>
-•	Alternatives considered: Other approaches?<br>
+<details> <summary><b>🐛 Bug Reports</b></summary>
+<pre>
+Please include:
+    •	Bot version or commit hash
+    •	Python version: python --version
+    •	OS: Windows/Mac/Linux
+    •	Error logs from Logs/ directory
+    •	Steps to reproduce
+</pre>pre>
+</details>
+<details> <summary><b>💡 Feature Requests</b></summary>
+<pre>
+Describe:
+    •	Use case: What problem does this solve?
+    •	Proposed solution: How should it work?
+    •	Alternatives considered: Other approaches?
+</pre>
 </details> <br>
-Development Workflow<br>
-1.	Fork the repository<br>
-2.	Create a branch: git checkout -b feature/amazing-feature<br>
-3.	Make changes with clear, focused commits<br>
-4.	Test thoroughly in a dev server<br>
-5.	Update docs if needed (README, docstrings)<br>
-6.	Submit PR with description of changes<br>
-Code Guidelines<br>
-•	Follow existing code style<br>
-•	Add docstrings to new functions<br>
-•	Update README.md for user-facing changes<br>
-•	Keep commits atomic and well-described<br>
+<pre>
+Development Workflow
+    1.	Fork the repository
+    2.	Create a branch: git checkout -b feature/amazing-feature
+    3.	Make changes with clear, focused commits
+    4.	Test thoroughly in a dev server
+    5.	Update docs if needed (README, docstrings)
+    6.	Submit PR with description of changes
+    
+Code Guidelines
+    •	Follow existing code style
+    •	Add docstrings to new functions
+    •	Update README.md for user-facing changes
+    •	Keep commits atomic and well-described
+</pre>
 <hr>
-📝 License<br>
+<h4>📝 License</h4>
 This project is licensed under the MIT License - see the LICENSE file for details.<br>
 TL;DR: You can use, modify, and distribute this code freely, just keep the copyright notice.<br>
 <hr>
-🙏 Acknowledgments<br>
+<h4>🙏 Acknowledgments</h4>
 This project is built on these amazing open-source projects:<br>
-<table> <tr> <td align="center" width="25%"> <a href="https://github.com/Rapptz/discord.py"> <img src="https://raw.githubusercontent.com/Rapptz/discord.py/master/docs/_static/discord_py_logo.png" width="60px" alt="discord.py"/><br/> <b>discord.py</b> </a><br/> Discord API wrapper </td> <td align="center" width="25%"> <a href="https://lmstudio.ai/"> <b>🖥️ LMStudio</b> </a><br/> Local LLM runtime </td> <td align="center" width="25%"> <a href="https://github.com/deedy5/ddgs"> <b>🦆 DuckDuckGo</b> </a><br/> Privacy-first search </td> <td align="center" width="25%"> <a href="https://github.com/adbar/trafilatura"> <b>📄 Trafilatura</b> </a><br/> Web scraping </td> </tr> </table> 
+<table> <tr> <td align="center" width="25%"> <a href="https://github.com/Rapptz/discord.py"><img src="https://github.com/github/explore/blob/main/topics/discord/discord.png?raw=true" width="60px" alt="discord.py"/><br/> <b>discord.py</b> </a><br/> Discord API wrapper </td> <td align="center" width="25%"> <a href="https://lmstudio.ai/"><img src="https://lmstudio.ai/_next/static/media/Building_Standing_BlueHammer.2da8c7d6.png" width="60px" alt="lmstudio"/><br/><b>🖥️ LMStudio</b> </a><br/> Local LLM runtime </td> <td align="center" width="25%"> <a href="https://github.com/deedy5/ddgs"> <b>🦆 Dux Distributed Global Search</b> </a><br/> Privacy-first search </td> <td align="center" width="25%"> <a href="https://github.com/adbar/trafilatura"> <b>📄 Trafilatura</b> </a><br/> Web scraping </td> </tr> </table> 
 Special thanks to:<br>
 •	AllTalk TTS for OpenAI-compatible text-to-speech<br>
 •	The Discord.py community for excellent documentation<br>
 •	All contributors and users of this project<br>
 <hr>
-📧 Support & Community<br>
+<h4>📧 Support & Community</h4>
 <div align="center"> 
    
 </div> 
