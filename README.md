@@ -1,6 +1,7 @@
 <div align="center"> 
 <h1>🤖 Discord AI Bot with LMStudio Integration</h1>
 <h2>A powerful, modular Discord bot with local AI integration via LMStudio, featuring web search, file processing, text-to-speech, and comprehensive server configuration.</h2>
+This my personal Discord bot, but feel free to play with it as you see fit.
 <h3><a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-features">Features</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-quick-start">Quick Start</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-slash-commands">Commands</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#%EF%B8%8F-configuration">Configuration</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-troubleshooting">Troubleshooting</a></h3>
 </div> 
 <hr>
