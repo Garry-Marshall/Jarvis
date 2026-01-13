@@ -317,7 +317,7 @@ Connect	                 Join voice
 Speak	                 TTS playback
 
 <b>Bot invite URL template:</b>
-https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=412317273088&scope=bot%20applications.commands
+https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=2150747136&scope=bot%20applications.commands
 </pre>
 </details>
 
