@@ -12,6 +12,7 @@ python-dotenv>=0.21.1
 
 # Web search functionality
 ddgs>=9.10.0
+lxml_html_clean>=0.4.3
 
 # Web content extraction
 trafilatura>=2.0.0
