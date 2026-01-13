@@ -1,38 +1,38 @@
 <div align="center"> 
-🤖 Discord AI Bot with LMStudio Integration
-   
-A powerful, modular Discord bot with local AI integration via LMStudio, featuring web search, file processing, text-to-speech, and comprehensive server configuration.
-Features • Quick Start • Commands • Configuration • Development
+🤖 Discord AI Bot with LMStudio Integration<br>
+<br>   
+A powerful, modular Discord bot with local AI integration via LMStudio, featuring web search, file processing, text-to-speech, and comprehensive server configuration.<br>
+Features • Quick Start • Commands • Configuration • Development<br>
 </div> 
-________________________________________
-✨ Features
+________________________________________<br>
+✨ Features<br>
 <table> <tr> <td width="50%"> 
-🧠 AI Capabilities
-•	✅ Local LLM Integration via LMStudio API
-•	✅ Model Selection - Switch between loaded models per server
-•	✅ Context-Aware Conversations - Maintains conversation history
-•	✅ Reasoning Model Support - Handles <think> tags automatically
-🔍 Enhanced Input Processing
-•	✅ Web Search - Automatic DuckDuckGo search when needed
-•	✅ URL Content Fetching - Extracts text from provided URLs
-•	✅ Image Processing - Vision model support for images
-•	✅ PDF Processing - Extracts and reads PDF content
-•	✅ Text File Support - Reads code files, documents, etc.
+🧠 AI Capabilities<br>
+•	✅ Local LLM Integration via LMStudio API<br>
+•	✅ Model Selection - Switch between loaded models per server<br>
+•	✅ Context-Aware Conversations - Maintains conversation history<br>
+•	✅ Reasoning Model Support - Handles <think> tags automatically<br>
+🔍 Enhanced Input Processing<br>
+•	✅ Web Search - Automatic DuckDuckGo search when needed<br>
+•	✅ URL Content Fetching - Extracts text from provided URLs<br>
+•	✅ Image Processing - Vision model support for images<br>
+•	✅ PDF Processing - Extracts and reads PDF content<br>
+•	✅ Text File Support - Reads code files, documents, etc.<br>
 </td> <td width="50%"> 
-🎙️ Voice & TTS
-•	✅ Voice Channel Integration - Bot joins and speaks in voice channels
-•	✅ Multiple Voices - 6 OpenAI-compatible voices (AllTalk TTS)
-•	✅ Auto-Disconnect - Leaves when alone in voice channel
-⚙️ Server Configuration
-•	✅ Custom System Prompts - Per-server AI personality
-•	✅ Temperature Control - Adjust response creativity
-•	✅ Token Limits - Control response length
-•	✅ Debug Logging - Per-server debug modes
-•	✅ Web Search Toggle - Enable/disable per server
-📊 Statistics & Management
-•	✅ Conversation Stats - Track tokens, response times, messages
-•	✅ History Management - Clear, reset, or view conversation history
-•	✅ Persistent Storage - Stats and settings saved across restarts
+🎙️ Voice & TTS<br>
+•	✅ Voice Channel Integration - Bot joins and speaks in voice channels<br>
+•	✅ Multiple Voices - 6 OpenAI-compatible voices (AllTalk TTS)<br>
+•	✅ Auto-Disconnect - Leaves when alone in voice channel<br>
+⚙️ Server Configuration<br>
+•	✅ Custom System Prompts - Per-server AI personality<br>
+•	✅ Temperature Control - Adjust response creativity<br>
+•	✅ Token Limits - Control response length<br>
+•	✅ Debug Logging - Per-server debug modes<br>
+•	✅ Web Search Toggle - Enable/disable per server<br>
+📊 Statistics & Management<br>
+•	✅ Conversation Stats - Track tokens, response times, messages<br>
+•	✅ History Management - Clear, reset, or view conversation history<br>
+•	✅ Persistent Storage - Stats and settings saved across restarts<br>
 </td> </tr> </table> 
 ________________________________________
 📁 Project Structure
