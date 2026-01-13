@@ -6,6 +6,7 @@ import discord
 import logging
 import time
 import os
+import threading
 
 from config.settings import CHANNEL_IDS, ALLOW_DMS, IGNORE_BOTS, CONTEXT_MESSAGES, ENABLE_TTS, LMSTUDIO_URL
 from config.constants import DEFAULT_SYSTEM_PROMPT
@@ -46,8 +47,11 @@ async def get_recent_context(channel, limit: int = CONTEXT_MESSAGES) -> list:
         async for msg in channel.history(limit=limit * 3):
             if IGNORE_BOTS and msg.author.bot:
                 continue
-            if msg.author == channel.guild.me if hasattr(channel, 'guild') else msg.author.bot:
-                continue
+            # For DMs, the channel won't have a guild attribute, so only the
+            # IGNORE_BOTS check above applies there.
+            if hasattr(channel, 'guild') and channel.guild is not None:
+                if msg.author == channel.guild.me:
+                    continue
             
             if isinstance(channel, discord.DMChannel):
                 context.append({"role": "user", "content": msg.content})
@@ -339,14 +343,22 @@ def setup_events(bot):
                                     with open(temp_audio, 'wb') as f:
                                         f.write(audio_data)
                                     
+                                    def _safe_remove(path: str):
+                                        try:
+                                            if os.path.exists(path):
+                                                os.remove(path)
+                                        except Exception:
+                                            pass
+
                                     def cleanup(error):
-                                        if os.path.exists(temp_audio):
-                                            try:
-                                                time.sleep(0.1)
-                                                os.remove(temp_audio)
-                                            except:
-                                                pass
-                                    
+                                        # Schedule file removal on a background timer to avoid
+                                        # blocking the voice client's callback thread or event loop.
+                                        try:
+                                            threading.Timer(0.1, _safe_remove, args=(temp_audio,)).start()
+                                        except Exception:
+                                            # Best-effort removal; ignore failures
+                                            pass
+
                                     voice_client.play(discord.FFmpegPCMAudio(temp_audio), after=cleanup)
                                     logger.info(f"Playing TTS audio for guild {guild_id}")
                             except Exception as e:

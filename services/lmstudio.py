@@ -134,8 +134,17 @@ async def stream_completion(
         async with aiohttp.ClientSession() as session:
             async with session.post(LMSTUDIO_URL, json=payload) as response:
                 if response.status == 200:
-                    async for line in response.content:
-                        line = line.decode('utf-8').strip()
+                    # Read the response stream line-by-line to avoid splitting
+                    # SSE frames across arbitrary chunk boundaries. Use the
+                    # StreamReader.readline() coroutine which yields complete
+                    # lines terminated by a newline.
+                    while True:
+                        line_bytes = await response.content.readline()
+                        if not line_bytes:
+                            break
+                        line = line_bytes.decode('utf-8').strip()
+                        if not line:
+                            continue
                         if line.startswith('data: '):
                             data_str = line[6:]
                             if data_str == '[DONE]':
@@ -146,6 +155,7 @@ async def stream_completion(
                                 if content:
                                     yield content
                             except json.JSONDecodeError:
+                                logger.debug('Received non-JSON SSE data; skipping')
                                 continue
                 else:
                     error_text = await response.text()
