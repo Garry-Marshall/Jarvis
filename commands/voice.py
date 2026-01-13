@@ -9,6 +9,8 @@ import logging
 
 from config.settings import ENABLE_TTS, ALLTALK_VOICE
 from config.constants import AVAILABLE_VOICES, VOICE_DESCRIPTIONS
+from utils.guild_settings import is_tts_enabled_for_guild
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,6 @@ voice_clients: Dict[int, discord.VoiceClient] = {}
 
 # Store selected voice per guild
 selected_voices: Dict[int, str] = {}
-
 
 class VoiceSelectView(discord.ui.View):
     """View with dropdown for voice selection."""
@@ -69,11 +70,20 @@ def setup_voice_commands(tree: app_commands.CommandTree):
     @tree.command(name='join', description='Join your voice channel')
     async def join_voice(interaction: discord.Interaction):
         """Join the voice channel the user is currently in."""
-        if not ENABLE_TTS:
-            await interaction.response.send_message(
-                "❌ TTS is currently disabled in the bot configuration.", 
-                ephemeral=True
-            )
+        guild_id = interaction.guild.id
+        
+        # Check both global and per-guild TTS settings
+        if not is_tts_enabled_for_guild(guild_id):
+            if not ENABLE_TTS:
+                await interaction.response.send_message(
+                    "❌ TTS is currently disabled globally in the bot configuration.", 
+                    ephemeral=True
+                )
+            else:
+                await interaction.response.send_message(
+                    "❌ TTS is currently disabled for this server. An admin can enable it using `/config`.", 
+                    ephemeral=True
+                )
             return
         
         # Check if user is in a voice channel
@@ -85,7 +95,6 @@ def setup_voice_commands(tree: app_commands.CommandTree):
             return
         
         voice_channel = interaction.user.voice.channel
-        guild_id = interaction.guild.id
         
         # Check if already connected
         if guild_id in voice_clients and voice_clients[guild_id].is_connected():
@@ -125,14 +134,21 @@ def setup_voice_commands(tree: app_commands.CommandTree):
     @tree.command(name='leave', description='Leave the voice channel')
     async def leave_voice(interaction: discord.Interaction):
         """Leave the current voice channel."""
-        if not ENABLE_TTS:
-            await interaction.response.send_message(
-                "❌ TTS is currently disabled in the bot configuration.", 
-                ephemeral=True
-            )
-            return
-        
         guild_id = interaction.guild.id
+        
+        # Check both global and per-guild TTS settings
+        if not is_tts_enabled_for_guild(guild_id):
+            if not ENABLE_TTS:
+                await interaction.response.send_message(
+                    "❌ TTS is currently disabled globally in the bot configuration.", 
+                    ephemeral=True
+                )
+            else:
+                await interaction.response.send_message(
+                    "❌ TTS is currently disabled for this server. An admin can enable it using `/config`.", 
+                    ephemeral=True
+                )
+            return
         
         if guild_id not in voice_clients or not voice_clients[guild_id].is_connected():
             await interaction.response.send_message(
@@ -160,14 +176,22 @@ def setup_voice_commands(tree: app_commands.CommandTree):
     @tree.command(name='voice', description='Select TTS voice')
     async def select_voice(interaction: discord.Interaction):
         """Show dropdown to select TTS voice."""
-        if not ENABLE_TTS:
-            await interaction.response.send_message(
-                "❌ TTS is currently disabled in the bot configuration.", 
-                ephemeral=True
-            )
+        guild_id = interaction.guild.id
+        
+        # Check both global and per-guild TTS settings
+        if not is_tts_enabled_for_guild(guild_id):
+            if not ENABLE_TTS:
+                await interaction.response.send_message(
+                    "❌ TTS is currently disabled globally in the bot configuration.", 
+                    ephemeral=True
+                )
+            else:
+                await interaction.response.send_message(
+                    "❌ TTS is currently disabled for this server. An admin can enable it using `/config`.", 
+                    ephemeral=True
+                )
             return
         
-        guild_id = interaction.guild.id
         current_voice = selected_voices.get(guild_id, ALLTALK_VOICE)
         
         # Build voice list with descriptions

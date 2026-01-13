@@ -202,6 +202,11 @@ class ConfigView(discord.ui.View):
         search_enabled = is_search_enabled(self.guild_id)
         self.toggle_search.label = f"Web Search: {'ON' if search_enabled else 'OFF'}"
         self.toggle_search.style = discord.ButtonStyle.success if search_enabled else discord.ButtonStyle.secondary
+        
+        # Update TTS button
+        tts_enabled = get_guild_setting(self.guild_id, "tts_enabled", True)
+        self.toggle_tts.label = f"TTS: {'ON' if tts_enabled else 'OFF'}"
+        self.toggle_tts.style = discord.ButtonStyle.success if tts_enabled else discord.ButtonStyle.secondary
     
     def create_embed(self) -> discord.Embed:
         """Create embed showing current configuration."""
@@ -243,6 +248,11 @@ class ConfigView(discord.ui.View):
         embed.add_field(
             name="🔍 Web Search",
             value="Enabled" if search_enabled else "Disabled",
+            inline=True
+        )
+        embed.add_field(
+            name="🔊 Text-to-Speech",
+            value="Enabled" if get_guild_setting(self.guild_id, "tts_enabled", True) else "Disabled",
             inline=True
         )
         embed.add_field(
@@ -304,11 +314,23 @@ class ConfigView(discord.ui.View):
         
         set_guild_setting(self.guild_id, "debug", new_state)
         self.update_toggle_buttons()
-
+        
         embed = self.create_embed()
         await interaction.response.edit_message(embed=embed, view=self)
         
         logger.info(f"Debug logging {'enabled' if new_state else 'disabled'} for guild {self.guild_id}")
+    
+    @discord.ui.button(label="Set Debug Level", style=discord.ButtonStyle.secondary, emoji="📝", row=1)
+    async def set_debug_level(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not is_guild_admin(interaction):
+            await interaction.response.send_message(
+                "❌ Only admins can modify settings.", ephemeral=True
+            )
+            return
+        
+        current = get_debug_level(self.guild_id)
+        modal = DebugLevelModal(self.guild_id, current)
+        await interaction.response.send_modal(modal)
     
     @discord.ui.button(label="Web Search: ON", style=discord.ButtonStyle.success, emoji="🔍", row=1)
     async def toggle_search(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -329,17 +351,24 @@ class ConfigView(discord.ui.View):
         
         logger.info(f"Web search {'enabled' if new_state else 'disabled'} for guild {self.guild_id}")
     
-    @discord.ui.button(label="Set Debug Level", style=discord.ButtonStyle.secondary, emoji="📝", row=1)
-    async def set_debug_level(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="TTS: ON", style=discord.ButtonStyle.success, emoji="🔊", row=1)
+    async def toggle_tts(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not is_guild_admin(interaction):
             await interaction.response.send_message(
                 "❌ Only admins can modify settings.", ephemeral=True
             )
             return
         
-        current = get_debug_level(self.guild_id)
-        modal = DebugLevelModal(self.guild_id, current)
-        await interaction.response.send_modal(modal)
+        current = get_guild_setting(self.guild_id, "tts_enabled", True)
+        new_state = not current
+        
+        set_guild_setting(self.guild_id, "tts_enabled", new_state)
+        self.update_toggle_buttons()
+        
+        embed = self.create_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
+        
+        logger.info(f"TTS {'enabled' if new_state else 'disabled'} for guild {self.guild_id}")
     
     @discord.ui.button(label="Clear Last Message", style=discord.ButtonStyle.danger, emoji="🧹", row=2)
     async def clear_last(self, interaction: discord.Interaction, button: discord.ui.Button):

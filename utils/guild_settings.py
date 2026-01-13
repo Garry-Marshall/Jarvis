@@ -8,8 +8,8 @@ import os
 from typing import Dict, Optional
 
 from config.constants import DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS
-from config.settings import GUILD_SETTINGS_FILE
-
+from config.settings import GUILD_SETTINGS_FILE, ENABLE_TTS
+ 
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +150,25 @@ def clear_guild_settings(guild_id: int) -> None:
         del guild_settings[guild_id]
         save_guild_settings()
         logger.info(f"Cleared all settings for guild {guild_id}")
+
+
+def is_tts_enabled_for_guild(guild_id: int) -> bool:
+    """
+    Check if TTS is enabled for a specific guild.
+    Checks both global setting and per-guild setting.
+    
+    Args:
+        guild_id: Guild ID to check
+        
+    Returns:
+        True if TTS is enabled both globally and for this guild
+    """
+    # First check global setting
+    if not ENABLE_TTS:
+        return False
+    
+    # Then check per-guild setting (defaults to True)
+    return get_guild_setting(guild_id, "tts_enabled", True)
 
 
 # Initialize guild settings on module import
