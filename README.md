@@ -1,7 +1,7 @@
 <div align="center"> 
 <h1>🤖 Discord AI Bot with LMStudio Integration</h1>
 <h2>A powerful, modular Discord bot with local AI integration via LMStudio, featuring web search, file processing, text-to-speech, and comprehensive server configuration.</h2>
-<h3><a href="https://github.com/Garry-Marshall/Jarvis/blob/main/README.md#-features">Features</a> • <a href="https://github.com/Garry-Marshall/Jarvis/blob/main/README.md#-quick-start">Quick Start</a> • <a href="https://github.com/Garry-Marshall/Jarvis/blob/main/README.md#-slash-commands">Commands</a> • <a href="https://github.com/Garry-Marshall/Jarvis/blob/main/README.md#%EF%B8%8F-configuration">Configuration</a> • <a href="https://github.com/Garry-Marshall/Jarvis/blob/main/README.md#-troubleshooting">Troubleshooting</a></h3>
+<h3><a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-features">Features</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-quick-start">Quick Start</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-slash-commands">Commands</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#%EF%B8%8F-configuration">Configuration</a> • <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-troubleshooting">Troubleshooting</a></h3>
 </div> 
 <hr>
 <h4>✨ Features</h4>
@@ -499,5 +499,5 @@ Special thanks to:<br>
 <div align="center"> 
 ⭐ Star this repo if you find it useful! ⭐<br>
 Made with ❤️ by the community<br>
-⬆ <a href="https://github.com/Garry-Marshall/Jarvis/blob/main/README.md#-discord-ai-bot-with-lmstudio-integration">Back to Top</a><br>
+⬆ <a href="https://github.com/Garry-Marshall/Jarvis?tab=readme-ov-file#-discord-ai-bot-with-lmstudio-integration">Back to Top</a><br>
 </div>
