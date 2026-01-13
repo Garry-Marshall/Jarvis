@@ -11,9 +11,9 @@ This my personal Discord bot, but feel free to play with it as you see fit.
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Local LLM Integration via LMStudio API<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Model Selection - Switch between loaded models per server<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Context-Aware Conversations - Maintains conversation history<br>
-&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Reasoning Model Support - Handles <think> tags automatically<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Reasoning Model Support - Handles &ltthink&gt tags automatically<br>
 <b>🔍 Enhanced Input Processing</b><br>
-&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Web Search - Automatic DuckDuckGo search when needed<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Web Search - Automatic web search when needed<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ URL Content Fetching - Extracts text from provided URLs<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Image Processing - Vision model support for images<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ PDF Processing - Extracts and reads PDF content<br>
@@ -28,6 +28,7 @@ This my personal Discord bot, but feel free to play with it as you see fit.
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Token Limits - Control response length<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Debug Logging - Per-server debug modes<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Web Search Toggle - Enable/disable per server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ TTS Toggle - Enable/disable TTS per server<br>
 <b>📊 Statistics & Management</b><br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Conversation Stats - Track tokens, response times, messages<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ History Management - Clear, reset, or view conversation history<br>
@@ -169,13 +170,12 @@ Bot: This document discusses quarterly sales performance,<br>
 <b>🗨️ Conversation Management</b><br>
 <br>
 <pre>
-<b>Command       Description                        Usage</b>
+<b>Command           Description</b>
 
-<b>/reset</b>        Clear conversation history        /reset
-<b>/history</b>      Show conversation length          /history
-<b>/stats</b>        Display detailed statistics       /stats
-<b>/stats_reset</b>  Reset statistics                  /stats_reset
-
+<b>/reset</b>            Clear conversation history
+<b>/history</b>          Show conversation length
+<b>/stats</b>            Display detailed statistics
+<b>/stats_reset</b>      Reset statisticst
 </pre>
 
 <h4>⚙️ Configuration</h4>
