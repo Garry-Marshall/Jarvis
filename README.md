@@ -445,7 +445,7 @@ Special thanks to:<br>
 <div align="center"> 
    
 </div> 
-•	🐛 Bug Reports: GitHub Issues<br>
+•	🐛 Bug Reports: <a href="https://github.com/Garry-Marshall/Jarvis/issues">Github Issues</a><br>
 •	💬 Questions: GitHub Discussions<br>
 •	📖 Wiki: Documentation<br>
 <hr>
