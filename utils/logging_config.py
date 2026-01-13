@@ -8,7 +8,7 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 
-from config import LOG_DIR
+from config.settings import LOG_DIR
 
 
 def setup_logging():

@@ -6,8 +6,8 @@ import discord
 from discord import app_commands
 import logging
 
-from config import CHANNEL_IDS, ALLOW_DMS
-from utils import (
+from config.settings import CHANNEL_IDS, ALLOW_DMS
+from utils.stats_manager import (
     clear_conversation_history,
     reset_stats,
     get_conversation_history

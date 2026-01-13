@@ -7,8 +7,9 @@ import asyncio
 import logging
 from typing import Optional
 
-from config import ALLTALK_URL, ALLTALK_VOICE, AVAILABLE_VOICES
-from utils import remove_thinking_tags
+from config.settings import ALLTALK_URL, ALLTALK_VOICE
+from config.constants import AVAILABLE_VOICES
+from utils.text_utils import remove_thinking_tags
 
 logger = logging.getLogger(__name__)
 

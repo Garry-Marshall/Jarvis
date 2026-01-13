@@ -6,8 +6,8 @@ import discord
 from discord import app_commands
 import logging
 
-from config import ALLOW_DMS
-from utils import (
+from config.settings import ALLOW_DMS
+from utils.stats_manager import (
     get_or_create_stats,
     get_stats_summary,
     reset_stats

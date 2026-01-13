@@ -4,8 +4,8 @@ A modular Discord bot with LMStudio integration, TTS, and file processing.
 """
 import logging
 
-from config import DISCORD_TOKEN, CHANNEL_IDS
-from utils import setup_logging
+from config.settings import DISCORD_TOKEN, CHANNEL_IDS
+from utils.logging_config import setup_logging
 from core import bot, setup_events
 
 # Setup logging first

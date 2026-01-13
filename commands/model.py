@@ -7,8 +7,8 @@ from discord import app_commands
 from typing import Dict, List
 import logging
 
-from services import fetch_available_models
-from config import DEFAULT_MODEL
+from services.lmstudio import fetch_available_models
+from config.constants import DEFAULT_MODEL
 
 logger = logging.getLogger(__name__)
 

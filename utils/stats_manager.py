@@ -9,7 +9,8 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Dict
 
-from config import STATS_FILE
+from config.settings import STATS_FILE
+
 
 logger = logging.getLogger(__name__)
 

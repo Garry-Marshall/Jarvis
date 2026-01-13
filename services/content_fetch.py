@@ -7,8 +7,8 @@ import logging
 import trafilatura
 from trafilatura.settings import use_config
 
-from config import MAX_URL_CHARS
-from utils import extract_urls
+from config.constants import MAX_URL_CHARS
+from utils.text_utils import extract_urls
 
 logger = logging.getLogger(__name__)
 

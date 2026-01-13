@@ -8,13 +8,9 @@ from typing import Optional, Dict
 
 from ddgs import DDGS
 
-from config import (
-    SEARCH_TRIGGERS,
-    NEGATIVE_SEARCH_TRIGGERS,
-    MIN_MESSAGE_LENGTH_FOR_SEARCH,
-    MAX_SEARCH_RESULTS,
-    SEARCH_COOLDOWN
-)
+from config.constants import SEARCH_TRIGGERS, NEGATIVE_SEARCH_TRIGGERS, MIN_MESSAGE_LENGTH_FOR_SEARCH, MAX_SEARCH_RESULTS
+from config.settings import SEARCH_COOLDOWN
+
 
 logger = logging.getLogger(__name__)
 

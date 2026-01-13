@@ -7,7 +7,9 @@ import logging
 import os
 from typing import Dict, Optional
 
-from config import GUILD_SETTINGS_FILE, DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS
+from config.constants import DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS
+from config.settings import GUILD_SETTINGS_FILE
+
 
 logger = logging.getLogger(__name__)
 

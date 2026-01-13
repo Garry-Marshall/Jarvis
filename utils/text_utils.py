@@ -3,7 +3,7 @@ Text processing utilities.
 Handles token estimation, thinking tag removal, and text cleaning.
 """
 import re
-from config import HIDE_THINKING
+from config.settings import HIDE_THINKING
 
 
 def estimate_tokens(text: str) -> int:

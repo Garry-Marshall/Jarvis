@@ -7,7 +7,8 @@ from discord import app_commands
 from typing import Dict
 import logging
 
-from config import ENABLE_TTS, AVAILABLE_VOICES, ALLTALK_VOICE, VOICE_DESCRIPTIONS
+from config.settings import ENABLE_TTS, ALLTALK_VOICE
+from config.constants import AVAILABLE_VOICES, VOICE_DESCRIPTIONS
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import json
 import logging
 from typing import AsyncGenerator, List, Dict, Optional
 
-from config import LMSTUDIO_URL, MAX_HISTORY
+from config.settings import LMSTUDIO_URL, MAX_HISTORY
 
 logger = logging.getLogger(__name__)
 

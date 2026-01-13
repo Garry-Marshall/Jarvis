@@ -7,48 +7,25 @@ import logging
 import time
 import os
 
-from config import (
-    CHANNEL_IDS,
-    ALLOW_DMS,
-    IGNORE_BOTS,
-    CONTEXT_MESSAGES,
-    ENABLE_TTS,
-    LMSTUDIO_URL,
-    DEFAULT_SYSTEM_PROMPT
-)
-from utils import (
-    estimate_tokens,
-    remove_thinking_tags,
-    is_inside_thinking_tags,
-    split_message,
-    log_effective_config,
-    guild_debug_log,
-    add_message_to_history,
-    update_stats,
-    is_context_loaded,
-    set_context_loaded,
-    get_conversation_history,
-    guild_settings
-)
-from services import (
-    build_api_messages,
-    stream_completion,
-    should_trigger_search,
-    check_search_cooldown,
-    get_web_context,
-    update_search_cooldown,
-    process_message_urls,
-    process_all_attachments,
-    text_to_speech
-)
-from commands import (
-    setup_all_commands,
-    initialize_models,
-    get_selected_model,
-    get_voice_client,
-    get_selected_voice,
-    voice_clients
-)
+from config.settings import CHANNEL_IDS, ALLOW_DMS, IGNORE_BOTS, CONTEXT_MESSAGES, ENABLE_TTS, LMSTUDIO_URL
+from config.constants import DEFAULT_SYSTEM_PROMPT
+
+from utils.text_utils import estimate_tokens, remove_thinking_tags, is_inside_thinking_tags, split_message
+from utils.logging_config import log_effective_config, guild_debug_log
+from utils.guild_settings import guild_settings
+from utils.stats_manager import add_message_to_history, update_stats, is_context_loaded, set_context_loaded, get_conversation_history
+
+from services.lmstudio import build_api_messages, stream_completion
+from services.content_fetch import process_message_urls
+from services.file_processor import process_all_attachments
+from services.search import should_trigger_search, check_search_cooldown, get_web_context, update_search_cooldown
+from services.tts import text_to_speech
+
+from commands.model import initialize_models, get_selected_model
+from commands.voice import get_voice_client, get_selected_voice, voice_clients
+
+from commands.__init__ import setup_all_commands
+
 
 logger = logging.getLogger(__name__)
 

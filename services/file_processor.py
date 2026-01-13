@@ -9,17 +9,9 @@ from typing import Optional, List, Dict
 
 from pypdf import PdfReader
 
-from config import (
-    ALLOW_IMAGES,
-    MAX_IMAGE_SIZE,
-    ALLOW_TEXT_FILES,
-    MAX_TEXT_FILE_SIZE,
-    ALLOW_PDF,
-    MAX_PDF_SIZE,
-    TEXT_FILE_EXTENSIONS,
-    FILE_ENCODINGS,
-    MAX_PDF_CHARS
-)
+from config.settings import ALLOW_IMAGES, MAX_IMAGE_SIZE, ALLOW_TEXT_FILES, MAX_TEXT_FILE_SIZE, ALLOW_PDF, MAX_PDF_SIZE
+from config.constants import TEXT_FILE_EXTENSIONS, FILE_ENCODINGS, MAX_PDF_CHARS
+
 
 logger = logging.getLogger(__name__)
 
