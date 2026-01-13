@@ -37,6 +37,7 @@ venv.bak/
 *.swo
 *~
 .DS_Store
+.github
 
 # Environment variables
 .env
