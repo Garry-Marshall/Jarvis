@@ -446,8 +446,8 @@ Special thanks to:<br>
    
 </div> 
 •	🐛 Bug Reports: <a href="https://github.com/Garry-Marshall/Jarvis/issues">Github Issues</a><br>
-•	💬 Questions: GitHub Discussions<br>
-•	📖 Wiki: Documentation<br>
+•	💬 Questions: <a href="https://github.com/Garry-Marshall/Jarvis/discussions">Github Discussions</a><br>
+•	📖 Wiki: Documentation (WIP)<br>
 <hr>
 <div align="center"> 
 ⭐ Star this repo if you find it useful! ⭐<br>
