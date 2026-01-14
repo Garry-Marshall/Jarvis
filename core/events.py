@@ -330,39 +330,42 @@ def setup_events(bot):
                     
                     # TTS in voice channel if enabled
                     if ENABLE_TTS and not is_dm and guild_id:
-                        voice_client = get_voice_client(guild_id)
-                        if voice_client and voice_client.is_connected() and not voice_client.is_playing():
-                            try:
-                                guild_voice = get_selected_voice(guild_id)
-                                audio_data = await text_to_speech(final_response, guild_voice)
-                                
-                                if audio_data:
-                                    # Unique filename to prevent access errors
-                                    ts = int(time.time())
-                                    temp_audio = f"temp_tts_{guild_id}_{ts}.mp3"
-                                    with open(temp_audio, 'wb') as f:
-                                        f.write(audio_data)
+                        # Check per-guild TTS setting
+                        from utils.guild_settings import is_tts_enabled_for_guild
+                        if is_tts_enabled_for_guild(guild_id):
+                            voice_client = get_voice_client(guild_id)
+                            if voice_client and voice_client.is_connected() and not voice_client.is_playing():
+                                try:
+                                    guild_voice = get_selected_voice(guild_id)
+                                    audio_data = await text_to_speech(final_response, guild_voice)
                                     
-                                    def _safe_remove(path: str):
-                                        try:
-                                            if os.path.exists(path):
-                                                os.remove(path)
-                                        except Exception:
-                                            pass
+                                    if audio_data:
+                                        # Unique filename to prevent access errors
+                                        ts = int(time.time())
+                                        temp_audio = f"temp_tts_{guild_id}_{ts}.mp3"
+                                        with open(temp_audio, 'wb') as f:
+                                            f.write(audio_data)
+                                        
+                                        def _safe_remove(path: str):
+                                            try:
+                                                if os.path.exists(path):
+                                                    os.remove(path)
+                                            except Exception:
+                                                pass
 
-                                    def cleanup(error):
-                                        # Schedule file removal on a background timer to avoid
-                                        # blocking the voice client's callback thread or event loop.
-                                        try:
-                                            threading.Timer(0.1, _safe_remove, args=(temp_audio,)).start()
-                                        except Exception:
-                                            # Best-effort removal; ignore failures
-                                            pass
+                                        def cleanup(error):
+                                            # Schedule file removal on a background timer to avoid
+                                            # blocking the voice client's callback thread or event loop.
+                                            try:
+                                                threading.Timer(0.1, _safe_remove, args=(temp_audio,)).start()
+                                            except Exception:
+                                                # Best-effort removal; ignore failures
+                                                pass
 
-                                    voice_client.play(discord.FFmpegPCMAudio(temp_audio), after=cleanup)
-                                    logger.info(f"Playing TTS audio for guild {guild_id}")
-                            except Exception as e:
-                                logger.error(f"Error playing TTS: {e}")
+                                        voice_client.play(discord.FFmpegPCMAudio(temp_audio), after=cleanup)
+                                        logger.info(f"Playing TTS audio for guild {guild_id}")
+                                except Exception as e:
+                                    logger.error(f"Error playing TTS: {e}")
                 else:
                     await status_msg.edit(content="_[Response contained only thinking process]_")
             else:
