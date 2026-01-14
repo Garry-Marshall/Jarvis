@@ -28,27 +28,21 @@ def setup_help_command(tree: app_commands.CommandTree):
 • Just type a message in a monitored channel or DM the bot to chat with the AI  
 • Attach images or text files to include them in the prompt  
 • Prefix a message with `*` to prevent the bot from responding  
-
 ---
 ### ⚙️ Configuration
 *(Some options require admin permissions)*
 • `/config` — Opens the config dialog box
-
 ---
 ### 🧠 Conversation Management
-• `/history` — Show number of messages in conversation history  
 • `/stats` — Display detailed conversation statistics  
-
 ---
 ### 🧠 Model Management
 • `/model` — Select the active AI model for this server  
-
 ---
 ### 📊 Voice / TTS
 • `/join` — Join your current voice channel  
 • `/leave` — Leave the voice channel  
 • `/voice` — Select the TTS voice persona
-
 ---
 ### ℹ️ Notes
 • Settings are saved per server and persist across restarts  

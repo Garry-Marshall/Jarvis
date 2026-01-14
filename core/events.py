@@ -13,7 +13,7 @@ from config.constants import DEFAULT_SYSTEM_PROMPT, MAX_MESSAGE_EDITS_PER_WINDOW
 
 from utils.text_utils import estimate_tokens, remove_thinking_tags, is_inside_thinking_tags, split_message
 from utils.logging_config import log_effective_config, guild_debug_log
-from utils.guild_settings import guild_settings, is_tts_enabled_for_guild, get_guild_voice, get_guild_temperature, get_guild_max_tokens, is_search_enabled
+from utils.settings_manager import guild_settings, is_tts_enabled_for_guild, get_guild_voice, get_guild_temperature, get_guild_max_tokens, is_search_enabled
 from utils.stats_manager import add_message_to_history, update_stats, is_context_loaded, set_context_loaded, get_conversation_history, cleanup_old_conversations
 
 from services.lmstudio import build_api_messages, stream_completion

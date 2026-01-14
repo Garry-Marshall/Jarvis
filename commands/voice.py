@@ -9,7 +9,7 @@ import logging
 
 from config.settings import ENABLE_TTS
 from config.constants import AVAILABLE_VOICES, VOICE_DESCRIPTIONS
-from utils.guild_settings import is_tts_enabled_for_guild, get_guild_voice, set_guild_setting
+from utils.settings_manager import is_tts_enabled_for_guild, get_guild_voice, set_guild_setting
 
 
 logger = logging.getLogger(__name__)

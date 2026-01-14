@@ -40,23 +40,30 @@ from utils.stats_manager import (
     get_conversation_history,
     is_context_loaded,
     set_context_loaded,
+    cleanup_old_conversations,
 )
 
-# Guild settings management
-from utils.guild_settings import (
+# Settings management
+from utils.settings_manager import (
+    SettingsManager,
+    get_settings_manager,
     load_guild_settings,
     save_guild_settings,
     get_guild_setting,
     set_guild_setting,
     delete_guild_setting,
-    get_guild_system_prompt,
     get_guild_temperature,
     get_guild_max_tokens,
+    get_guild_system_prompt,
+    is_debug_enabled as settings_is_debug_enabled,  # Alias to avoid conflict
+    get_debug_level as settings_get_debug_level,    # Alias to avoid conflict
     is_search_enabled,
+    is_tts_enabled_for_guild,
+    get_guild_voice,
     get_all_guild_settings,
     clear_guild_settings,
+    guild_settings,
 )
-
 
 __all__ = [
     # Logging
@@ -91,17 +98,25 @@ __all__ = [
     'get_conversation_history',
     'is_context_loaded',
     'set_context_loaded',
+    'cleanup_old_conversations',
     
-    # Guild settings
+    # Settings management
+    'SettingsManager',
+    'get_settings_manager',
     'load_guild_settings',
     'save_guild_settings',
     'get_guild_setting',
     'set_guild_setting',
     'delete_guild_setting',
-    'get_guild_system_prompt',
     'get_guild_temperature',
     'get_guild_max_tokens',
+    'get_guild_system_prompt',
+    'settings_is_debug_enabled',
+    'settings_get_debug_level',
     'is_search_enabled',
+    'is_tts_enabled_for_guild',
+    'get_guild_voice',
     'get_all_guild_settings',
     'clear_guild_settings',
+    'guild_settings',
 ]
