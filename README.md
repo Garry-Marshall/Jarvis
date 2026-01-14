@@ -30,7 +30,7 @@ This my personal Discord bot, but feel free to play with it as you see fit.
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Web Search Toggle - Enable/disable per server<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ TTS Toggle - Enable/disable TTS per server<br>
 <b>📊 Statistics & Management</b><br>
-&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Conversation Stats - Track tokens, response times, messages<br>
+&nbsp;&nbsp;&nbsp;&nbsp;•	✅ Conversation Stats - Track tokens, response times, messages, tool usage<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ History Management - Clear, reset, or view conversation history<br>
 &nbsp;&nbsp;&nbsp;&nbsp;•	✅ Persistent Storage - Stats and settings saved across restarts<br>
 <br><hr><br>
