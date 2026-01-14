@@ -82,7 +82,7 @@ discord_bot/<br>
 <b>Prerequisites</b>
     
 <b>Requirement        Version            Link</b>
-Python             3.8+               <a href="https://www.python.org/downloads/">Download</a>
+Python             3.9+               <a href="https://www.python.org/downloads/">Download</a>
 Discord Bot        Token Required     <a href="https://discord.com/developers/applications">Create Bot</a>
 LMStudio           Latest             <a href="https://lmstudio.ai/">Download</a>
 AllTalk TTS        Optional           <a href="https://github.com/erew123/alltalk_tts/tree/alltalkbeta">Download</a>
@@ -172,10 +172,8 @@ Bot: This document discusses quarterly sales performance,<br>
 <pre>
 <b>Command           Description</b>
 
-<b>/reset</b>            Clear conversation history and stats
 <b>/history</b>          Show conversation length in memory
 <b>/stats</b>            Display detailed statistics
-<b>/stats_reset</b>      Reset statistics
 </pre>
 
 <h4>⚙️ Configuration</h4>
