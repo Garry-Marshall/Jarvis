@@ -5,7 +5,7 @@ Exports all command setup functions and shared data.
 
 from .conversation import setup_conversation_commands
 from .stats import setup_stats_commands
-from .voice import setup_voice_commands, voice_clients, get_voice_client, get_selected_voice
+from .voice import setup_voice_commands, voice_clients, get_voice_client
 from .model import setup_model_command, selected_models, available_models, default_model, get_selected_model, initialize_models
 from .config_cmd import setup_config_command
 from .help import setup_help_command
@@ -39,7 +39,6 @@ __all__ = [
     # Voice data
     'voice_clients',
     'get_voice_client',
-    'get_selected_voice',
     
     # Model data
     'selected_models',

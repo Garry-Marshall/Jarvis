@@ -7,7 +7,7 @@ from discord import app_commands
 from typing import Dict, Optional
 import logging
 
-from config.settings import ENABLE_TTS, ALLTALK_VOICE
+from config.settings import ENABLE_TTS
 from config.constants import AVAILABLE_VOICES, VOICE_DESCRIPTIONS
 from utils.guild_settings import is_tts_enabled_for_guild, get_guild_voice, set_guild_setting
 
@@ -68,20 +68,20 @@ def setup_voice_commands(tree: app_commands.CommandTree):
         
         if not is_tts_enabled_for_guild(guild_id):
             if not ENABLE_TTS:
-                await interaction.response.send_message("❌ TTS is globally disabled.", ephemeral=True)
+                await interaction.response.send_message("❌ TTS is currently disabled globally in the bot configuration.", ephemeral=True)
             else:
-                await interaction.response.send_message("❌ TTS is disabled for this server.", ephemeral=True)
+                await interaction.response.send_message("❌ TTS is disabled for this server. An admin can enable it using '/config'.", ephemeral=True)
             return
         
         if not interaction.user.voice or not interaction.user.voice.channel:
-            await interaction.response.send_message("❌ You need to be in a voice channel!", ephemeral=True)
+            await interaction.response.send_message("❌ You need to be in a voice channel first!", ephemeral=True)
             return
         
         voice_channel = interaction.user.voice.channel
         
         if guild_id in voice_clients and voice_clients[guild_id].is_connected():
             if voice_clients[guild_id].channel.id == voice_channel.id:
-                await interaction.response.send_message("✅ Already in your channel!", ephemeral=True)
+                await interaction.response.send_message("✅ Already in your voice channel!", ephemeral=True)
                 return
             await voice_clients[guild_id].move_to(voice_channel)
             await interaction.response.send_message(f"✅ Moved to {voice_channel.name}!", ephemeral=True)
@@ -93,7 +93,7 @@ def setup_voice_commands(tree: app_commands.CommandTree):
             await interaction.response.send_message(f"✅ Joined {voice_channel.name}!", ephemeral=True)
         except Exception as e:
             logger.error(f"Error joining: {e}")
-            await interaction.response.send_message(f"❌ Failed to join: {str(e)}", ephemeral=True)
+            await interaction.response.send_message(f"❌ Failed to join voice channel: {str(e)}", ephemeral=True)
     
     @tree.command(name='leave', description='Leave the voice channel')
     async def leave_voice(interaction: discord.Interaction):
@@ -111,7 +111,7 @@ def setup_voice_commands(tree: app_commands.CommandTree):
         guild_id = interaction.guild.id
         
         if not is_tts_enabled_for_guild(guild_id):
-            await interaction.response.send_message("❌ TTS is disabled.", ephemeral=True)
+            await interaction.response.send_message("❌ TTS is currently disabled globally in the bot configuration.", ephemeral=True)
             return
         
         # Pull from persistent settings
@@ -133,8 +133,3 @@ def setup_voice_commands(tree: app_commands.CommandTree):
 def get_voice_client(guild_id: int) -> Optional[discord.VoiceClient]:
     """Get the voice client for a guild."""
     return voice_clients.get(guild_id)
-
-
-def get_selected_voice(guild_id: int) -> str:
-    """Get the selected voice for a guild from persistent settings."""
-    return get_guild_voice(guild_id)

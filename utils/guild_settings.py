@@ -93,11 +93,6 @@ def get_guild_max_tokens(guild_id: Optional[int]) -> int:
     return int(tokens)
 
 
-def get_guild_voice(guild_id: Optional[int]) -> str:
-    """Get the selected voice for a guild."""
-    return get_guild_setting(guild_id, "selected_voice", ALLTALK_VOICE)
-
-
 def is_search_enabled(guild_id: Optional[int]) -> bool:
     """Check if web search is enabled for a guild."""
     return get_guild_setting(guild_id, "search_enabled", True)
