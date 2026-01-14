@@ -64,6 +64,7 @@ discord_bot/<br>
 │
 ├── 📁 commands/              # Slash commands
 │   ├── stats.py              # /stats command
+│   ├── status.py             # /status command
 │   ├── voice.py              # /join, /leave, /voice
 │   ├── model.py              # /model selection
 │   ├── config_cmd.py         # /config command
