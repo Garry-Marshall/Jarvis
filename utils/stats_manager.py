@@ -35,6 +35,12 @@ def create_empty_stats() -> dict:
         "response_times": [],
         "last_message_time": None,
         "failed_requests": 0,
+        "tool_usage": {
+            "web_search": 0,
+            "image_analysis": 0,
+            "pdf_read": 0,
+            "tts_voice": 0,
+        }
     }
 
 
@@ -130,7 +136,15 @@ def get_or_create_stats(conversation_id: int) -> dict:
     """
     if conversation_id not in channel_stats:
         channel_stats[conversation_id] = create_empty_stats()
-    save_stats()
+    else:
+        # Ensure tool_usage exists for backward compatibility
+        if "tool_usage" not in channel_stats[conversation_id]:
+            channel_stats[conversation_id]["tool_usage"] = {
+                "web_search": 0,
+                "image_analysis": 0,
+                "pdf_read": 0,
+                "tts_voice": 0,
+            }
     
     return channel_stats[conversation_id]
 
@@ -141,7 +155,8 @@ def update_stats(
     response_tokens_raw: int = 0,
     response_tokens_cleaned: int = 0,
     response_time: float = None,
-    failed: bool = False
+    failed: bool = False,
+    tool_used: str = None
 ) -> None:
     """
     Update statistics for a conversation.
@@ -153,6 +168,7 @@ def update_stats(
         response_tokens_cleaned: Cleaned response tokens (after removing thinking)
         response_time: Time taken for response in seconds
         failed: Whether the request failed
+        tool_used: Name of tool used (web_search, image_analysis, pdf_read, tts_voice)
     """
     stats = get_or_create_stats(conversation_id)
     
@@ -174,6 +190,20 @@ def update_stats(
                 stats["response_times"] = stats["response_times"][-MAX_RESPONSE_TIMES:]
         
         stats["last_message_time"] = datetime.now()
+    
+    # Track tool usage regardless of success/failure
+    if tool_used:
+        # Ensure tool_usage dict exists
+        if "tool_usage" not in stats:
+            stats["tool_usage"] = {
+                "web_search": 0,
+                "image_analysis": 0,
+                "pdf_read": 0,
+                "tts_voice": 0,
+            }
+        
+        if tool_used in stats["tool_usage"]:
+            stats["tool_usage"][tool_used] += 1
     
     save_stats()
 
@@ -216,6 +246,16 @@ def get_stats_summary(conversation_id: int) -> str:
     
     history_count = len(conversation_histories.get(conversation_id, []))
     
+    # Get tool usage stats
+    tool_usage = stats.get('tool_usage', {})
+    tool_stats = (
+        f"\n\n**Tool Usage:**\n"
+        f"🔍 Web Searches: {tool_usage.get('web_search', 0)}\n"
+        f"🖼️ Images Analyzed: {tool_usage.get('image_analysis', 0)}\n"
+        f"📄 PDFs Read: {tool_usage.get('pdf_read', 0)}\n"
+        f"🔊 Voice Replies: {tool_usage.get('tts_voice', 0)}"
+    )
+    
     return f"""📈 **Conversation Statistics**
 
 **Total Messages:** {stats['total_messages']}
@@ -228,7 +268,7 @@ def get_stats_summary(conversation_id: int) -> str:
 **Session Duration:** {hours}h {minutes}m {seconds}s
 **Average Response Time:** {avg_response_time:.2f}s
 **Last Message:** {last_msg}
-**Messages in History:** {history_count}
+**Messages in History:** {history_count}{tool_stats}
 """
 
 

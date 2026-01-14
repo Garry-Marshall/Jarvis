@@ -150,8 +150,19 @@ def setup_events(bot):
         if not message.content.strip() and not message.attachments:
             return
         
-        # Process attachments
+        # Process attachments and track tool usage
         images, text_files_content = await process_all_attachments(message.attachments, message.channel)
+        
+        # Track image analysis
+        if images:
+            for _ in images:
+                update_stats(conversation_id, tool_used="image_analysis")
+        
+        # Track PDF reading (check if any text files were PDFs)
+        if text_files_content:
+            for attachment in message.attachments:
+                if attachment.filename.lower().endswith('.pdf'):
+                    update_stats(conversation_id, tool_used="pdf_read")
         
         # Check if we have any content to process
         if not message.content.strip() and not images and not text_files_content:
@@ -196,6 +207,8 @@ def setup_events(bot):
                         logger.info(f"🔍 Triggering web search for: '{combined_message[:50]}...'")
                         web_context = await get_web_context(combined_message)
                         update_search_cooldown(guild_id)
+                        # Track web search usage
+                        update_stats(conversation_id, tool_used="web_search")
             
             # Check for URLs in message
             url_context = await process_message_urls(combined_message)
@@ -340,6 +353,9 @@ def setup_events(bot):
                                     audio_data = await text_to_speech(final_response, guild_voice)
                                     
                                     if audio_data:
+                                        # Track TTS usage
+                                        update_stats(conversation_id, tool_used="tts_voice")
+                                        
                                         # Unique filename to prevent access errors
                                         ts = int(time.time())
                                         temp_audio = f"temp_tts_{guild_id}_{ts}.mp3"
