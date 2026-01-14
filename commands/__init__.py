@@ -3,7 +3,6 @@ Commands package initialization.
 Exports all command setup functions and shared data.
 """
 
-from commands.conversation import setup_conversation_commands
 from commands.stats import setup_stats_commands
 from commands.voice import setup_voice_commands, voice_clients, get_voice_client
 from commands.model import setup_model_command, selected_models, available_models, default_model, get_selected_model, initialize_models
@@ -18,7 +17,6 @@ def setup_all_commands(tree):
     Args:
         tree: Discord command tree to register commands with
     """
-    setup_conversation_commands(tree)
     setup_stats_commands(tree)
     setup_voice_commands(tree)
     setup_model_command(tree)

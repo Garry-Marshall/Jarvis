@@ -1,6 +1,6 @@
 """
 Statistics commands.
-Handles /stats and /stats_reset commands.
+Handles /stats command.
 """
 import discord
 from discord import app_commands

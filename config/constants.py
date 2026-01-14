@@ -102,3 +102,10 @@ DEFAULT_MODEL = "local-model"
 
 # Maximum number of response times to keep in memory
 MAX_RESPONSE_TIMES = 100
+
+# Days to keep conversation history before considering it inactive
+INACTIVITY_THRESHOLD_DAYS = 30
+
+# Constants for rate limiting
+MAX_MESSAGE_EDITS_PER_WINDOW = 4  # Discord allows 5, use 4 to be safe
+MESSAGE_EDIT_WINDOW = 5.0  # seconds

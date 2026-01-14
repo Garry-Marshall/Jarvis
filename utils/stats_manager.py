@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 from config.settings import STATS_FILE, MAX_HISTORY
-from config.constants import MAX_RESPONSE_TIMES
+from config.constants import MAX_RESPONSE_TIMES, INACTIVITY_THRESHOLD_DAYS
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +22,6 @@ context_loaded: Dict[int, bool] = defaultdict(bool)
 
 # Store statistics per channel/DM
 channel_stats: Dict[int, Dict] = {}
-
-# Inactivity threshold for cleanup (30 days)
-INACTIVITY_THRESHOLD_DAYS = 30
 
 
 def create_empty_stats() -> dict:

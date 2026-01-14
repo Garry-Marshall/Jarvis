@@ -9,7 +9,7 @@ import os
 import threading
 
 from config.settings import CHANNEL_IDS, ALLOW_DMS, IGNORE_BOTS, CONTEXT_MESSAGES, ENABLE_TTS, LMSTUDIO_URL
-from config.constants import DEFAULT_SYSTEM_PROMPT
+from config.constants import DEFAULT_SYSTEM_PROMPT, MAX_MESSAGE_EDITS_PER_WINDOW, MESSAGE_EDIT_WINDOW
 
 from utils.text_utils import estimate_tokens, remove_thinking_tags, is_inside_thinking_tags, split_message
 from utils.logging_config import log_effective_config, guild_debug_log
@@ -29,10 +29,6 @@ from commands.__init__ import setup_all_commands
 
 
 logger = logging.getLogger(__name__)
-
-# Constants for rate limiting
-MAX_MESSAGE_EDITS_PER_WINDOW = 4  # Discord allows 5, use 4 to be safe
-MESSAGE_EDIT_WINDOW = 5.0  # seconds
 
 
 async def get_recent_context(channel, limit: int = CONTEXT_MESSAGES) -> list:
