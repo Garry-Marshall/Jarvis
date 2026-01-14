@@ -212,7 +212,9 @@ def setup_events(bot):
             
             # Check for URLs in message
             url_context = await process_message_urls(combined_message)
-            
+            # Track web search usage
+            update_stats(conversation_id, tool_used="url_fetch")   
+                     
             # Add contexts to system prompt
             if web_context or url_context:
                 final_system_prompt += "\n\nADDITIONAL CONTEXT FOR THIS REQUEST:"

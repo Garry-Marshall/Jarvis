@@ -37,6 +37,7 @@ def create_empty_stats() -> dict:
         "failed_requests": 0,
         "tool_usage": {
             "web_search": 0,
+            "url_fetch": 0,
             "image_analysis": 0,
             "pdf_read": 0,
             "tts_voice": 0,
@@ -141,6 +142,7 @@ def get_or_create_stats(conversation_id: int) -> dict:
         if "tool_usage" not in channel_stats[conversation_id]:
             channel_stats[conversation_id]["tool_usage"] = {
                 "web_search": 0,
+                "url_fetch": 0,
                 "image_analysis": 0,
                 "pdf_read": 0,
                 "tts_voice": 0,
@@ -197,6 +199,7 @@ def update_stats(
         if "tool_usage" not in stats:
             stats["tool_usage"] = {
                 "web_search": 0,
+                "url_fetch": 0,
                 "image_analysis": 0,
                 "pdf_read": 0,
                 "tts_voice": 0,
@@ -251,6 +254,7 @@ def get_stats_summary(conversation_id: int) -> str:
     tool_stats = (
         f"\n\n**Tool Usage:**\n"
         f"🔍 Web Searches: {tool_usage.get('web_search', 0)}\n"
+        f"🌐 URLs Fetched: {tool_usage.get('url_fetch', 0)}\n"
         f"🖼️ Images Analyzed: {tool_usage.get('image_analysis', 0)}\n"
         f"📄 PDFs Read: {tool_usage.get('pdf_read', 0)}\n"
         f"🔊 Voice Replies: {tool_usage.get('tts_voice', 0)}"
