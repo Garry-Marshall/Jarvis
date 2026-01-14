@@ -8,7 +8,7 @@ import os
 from typing import Dict, Optional
 
 from config.constants import DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS
-from config.settings import GUILD_SETTINGS_FILE, ENABLE_TTS
+from config.settings import GUILD_SETTINGS_FILE, ENABLE_TTS, ALLTALK_VOICE
  
 
 logger = logging.getLogger(__name__)
@@ -50,44 +50,26 @@ def save_guild_settings() -> None:
 
 
 def get_guild_setting(guild_id: Optional[int], key: str, default=None):
-    """
-    Get a specific setting for a guild.
-    
-    Args:
-        guild_id: Guild ID (None for DMs)
-        key: Setting key
-        default: Default value if not set
-        
-    Returns:
-        Setting value or default
-    """
+    """Get a specific setting for a guild."""
     if guild_id and guild_id in guild_settings:
         return guild_settings[guild_id].get(key, default)
     return default
 
 
 def set_guild_setting(guild_id: int, key: str, value) -> None:
-    """
-    Set a specific setting for a guild.
-    
-    Args:
-        guild_id: Guild ID
-        key: Setting key
-        value: Setting value
-    """
+    """Set a specific setting for a guild."""
     guild_settings.setdefault(guild_id, {})[key] = value
     save_guild_settings()
     logger.info(f"Updated guild {guild_id} setting: {key} = {value}")
 
 
+def get_guild_voice(guild_id: Optional[int]) -> str:
+    """Get the selected voice for a guild, defaulting to ALLTALK_VOICE."""
+    return get_guild_setting(guild_id, "selected_voice", ALLTALK_VOICE)
+
+
 def delete_guild_setting(guild_id: int, key: str) -> None:
-    """
-    Delete a specific setting for a guild.
-    
-    Args:
-        guild_id: Guild ID
-        key: Setting key
-    """
+    """Delete a specific setting for a guild."""
     if guild_id in guild_settings:
         guild_settings[guild_id].pop(key, None)
         save_guild_settings()
@@ -111,6 +93,11 @@ def get_guild_max_tokens(guild_id: Optional[int]) -> int:
     return int(tokens)
 
 
+def get_guild_voice(guild_id: Optional[int]) -> str:
+    """Get the selected voice for a guild."""
+    return get_guild_setting(guild_id, "selected_voice", ALLTALK_VOICE)
+
+
 def is_search_enabled(guild_id: Optional[int]) -> bool:
     """Check if web search is enabled for a guild."""
     return get_guild_setting(guild_id, "search_enabled", True)
@@ -127,25 +114,12 @@ def get_debug_level(guild_id: Optional[int]) -> str:
 
 
 def get_all_guild_settings(guild_id: int) -> dict:
-    """
-    Get all settings for a guild.
-    
-    Args:
-        guild_id: Guild ID
-        
-    Returns:
-        Dictionary of all settings
-    """
+    """Get all settings for a guild."""
     return guild_settings.get(guild_id, {}).copy()
 
 
 def clear_guild_settings(guild_id: int) -> None:
-    """
-    Clear all settings for a guild.
-    
-    Args:
-        guild_id: Guild ID
-    """
+    """Clear all settings for a guild."""
     if guild_id in guild_settings:
         del guild_settings[guild_id]
         save_guild_settings()
@@ -153,21 +127,9 @@ def clear_guild_settings(guild_id: int) -> None:
 
 
 def is_tts_enabled_for_guild(guild_id: int) -> bool:
-    """
-    Check if TTS is enabled for a specific guild.
-    Checks both global setting and per-guild setting.
-    
-    Args:
-        guild_id: Guild ID to check
-        
-    Returns:
-        True if TTS is enabled both globally and for this guild
-    """
-    # First check global setting
+    """Check if TTS is enabled for a specific guild."""
     if not ENABLE_TTS:
         return False
-    
-    # Then check per-guild setting (defaults to True)
     return get_guild_setting(guild_id, "tts_enabled", True)
 
 

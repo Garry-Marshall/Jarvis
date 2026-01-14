@@ -13,7 +13,7 @@ from config.constants import DEFAULT_SYSTEM_PROMPT
 
 from utils.text_utils import estimate_tokens, remove_thinking_tags, is_inside_thinking_tags, split_message
 from utils.logging_config import log_effective_config, guild_debug_log
-from utils.guild_settings import guild_settings
+from utils.guild_settings import guild_settings, is_tts_enabled_for_guild, get_guild_voice,get_guild_temperature, get_guild_max_tokens, is_search_enabled
 from utils.stats_manager import add_message_to_history, update_stats, is_context_loaded, set_context_loaded, get_conversation_history
 
 from services.lmstudio import build_api_messages, stream_completion
@@ -23,7 +23,8 @@ from services.search import should_trigger_search, check_search_cooldown, get_we
 from services.tts import text_to_speech
 
 from commands.model import initialize_models, get_selected_model
-from commands.voice import get_voice_client, get_selected_voice, voice_clients
+# Removed get_selected_voice import as we now use get_guild_voice from guild_settings
+from commands.voice import get_voice_client, voice_clients
 
 from commands.__init__ import setup_all_commands
 
@@ -195,7 +196,6 @@ def setup_events(bot):
             # Check for web search
             web_context = ""
             if should_trigger_search(combined_message):
-                from utils import is_search_enabled
                 if is_search_enabled(guild_id):
                     cooldown = check_search_cooldown(guild_id)
                     if cooldown:
@@ -256,8 +256,7 @@ def setup_events(bot):
             # Build API messages
             api_messages = build_api_messages(get_conversation_history(conversation_id), final_system_prompt)
             
-            # Get model and settings
-            from utils import get_guild_temperature, get_guild_max_tokens
+            # Get model and settings using persistence getters
             model_to_use = get_selected_model(guild_id) if guild_id else "local-model"
             temperature = get_guild_temperature(guild_id)
             max_tokens = get_guild_max_tokens(guild_id)
@@ -346,12 +345,12 @@ def setup_events(bot):
                     # TTS in voice channel if enabled
                     if ENABLE_TTS and not is_dm and guild_id:
                         # Check per-guild TTS setting
-                        from utils.guild_settings import is_tts_enabled_for_guild
                         if is_tts_enabled_for_guild(guild_id):
                             voice_client = get_voice_client(guild_id)
                             if voice_client and voice_client.is_connected() and not voice_client.is_playing():
                                 try:
-                                    guild_voice = get_selected_voice(guild_id)
+                                    # Use the new persistent getter for voice selection
+                                    guild_voice = get_guild_voice(guild_id)
                                     audio_data = await text_to_speech(final_response, guild_voice)
                                     
                                     if audio_data:
@@ -372,16 +371,14 @@ def setup_events(bot):
                                                 pass
 
                                         def cleanup(error):
-                                            # Schedule file removal on a background timer to avoid
-                                            # blocking the voice client's callback thread or event loop.
+                                            # Schedule file removal on a background timer
                                             try:
                                                 threading.Timer(0.1, _safe_remove, args=(temp_audio,)).start()
                                             except Exception:
-                                                # Best-effort removal; ignore failures
                                                 pass
 
                                         voice_client.play(discord.FFmpegPCMAudio(temp_audio), after=cleanup)
-                                        logger.info(f"Playing TTS audio for guild {guild_id}")
+                                        logger.info(f"Playing TTS audio for guild {guild_id} with voice {guild_voice}")
                                 except Exception as e:
                                     logger.error(f"Error playing TTS: {e}")
                 else:
