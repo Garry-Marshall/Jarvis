@@ -23,6 +23,9 @@ trafilatura>=2.0.0
 # PDF processing
 pypdf>=6.6.0
 
+# System Monitoring
+psutil>=5.9.0
+
 # Optional
 # Uncomment if needed
 # lxml>=6.0.2

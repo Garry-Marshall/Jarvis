@@ -22,7 +22,6 @@ def setup_help_command(tree: app_commands.CommandTree):
         """Display comprehensive help information about the bot."""
         help_text = """
 🤖 **Jarvis — Help**
-
 ---
 ### 💬 Core Usage
 • Just type a message in a monitored channel or DM the bot to chat with the AI  
@@ -36,13 +35,16 @@ def setup_help_command(tree: app_commands.CommandTree):
 ### 🧠 Conversation Management
 • `/stats` — Display detailed conversation statistics  
 ---
-### 🧠 Model Management
+### 🤖 Model Management
 • `/model` — Select the active AI model for this server  
 ---
 ### 📊 Voice / TTS
 • `/join` — Join your current voice channel  
 • `/leave` — Leave the voice channel  
 • `/voice` — Select the TTS voice persona
+---
+### 🔧 System
+• `/status` — Show bot health and connectivity status  
 ---
 ### ℹ️ Notes
 • Settings are saved per server and persist across restarts  

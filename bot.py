@@ -1,50 +1,48 @@
 """
-Discord Bot - Main Entry Point
-A modular Discord bot with LMStudio integration, TTS, and file processing.
+Main bot entry point.
+Initializes and runs the Discord bot with graceful shutdown support.
 """
 import logging
+import sys
 
-from config.settings import DISCORD_TOKEN, CHANNEL_IDS
+from config.settings import DISCORD_TOKEN
 from utils.logging_config import setup_logging
+from core.bot_instance import get_bot
 from core.events import setup_events
-from core.bot_instance import bot
-
+from core.shutdown_handler import setup_shutdown_handlers
 
 # Setup logging first
-log_filename = setup_logging()
-
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
 def main():
     """Main entry point for the bot."""
+    # Validate token
+    if not DISCORD_TOKEN or DISCORD_TOKEN == 'your-discord-bot-token-here':
+        logger.error("❌ DISCORD_BOT_TOKEN not set in .env file!")
+        logger.error("Please edit the .env file and add your bot token.")
+        sys.exit(1)
     
-    # Validate configuration
-    if DISCORD_TOKEN == 'your-discord-bot-token-here':
-        logger.error("Please set your DISCORD_BOT_TOKEN environment variable")
-        logger.info("You can create a bot at: https://discord.com/developers/applications")
-        return
-    
-    if not CHANNEL_IDS or CHANNEL_IDS == {0}:
-        logger.error("Please set your DISCORD_CHANNEL_IDS environment variable")
-        logger.info("Right-click channels in Discord (with Developer Mode on) and click 'Copy ID'")
-        logger.info("Format: DISCORD_CHANNEL_IDS=123456789,987654321,111222333")
-        return
+    # Get bot instance
+    bot = get_bot()
     
     # Setup event handlers
     setup_events(bot)
     
-    # Start the bot
-    logger.info("Starting bot...")
-    logger.info(f"Logging to: {log_filename}")
+    # Setup graceful shutdown handlers
+    setup_shutdown_handlers(bot)
     
+    # Run the bot
     try:
-        bot.run(DISCORD_TOKEN)
+        logger.info("🚀 Starting bot...")
+        bot.run(DISCORD_TOKEN, log_handler=None)  # We handle logging ourselves
     except KeyboardInterrupt:
-        logger.info("Bot stopped by user")
+        logger.info("👋 Bot stopped by user")
     except Exception as e:
-        logger.error(f"Fatal error: {e}", exc_info=True)
+        logger.error(f"❌ Fatal error: {e}", exc_info=True)
+        sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
