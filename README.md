@@ -64,8 +64,7 @@ discord_bot/<br>
 │   └── __init__.py
 │
 ├── 📁 commands/              # Slash commands
-│   ├── conversation.py       # /reset, /history
-│   ├── stats.py              # /stats commands
+│   ├── stats.py              # /stats command
 │   ├── voice.py              # /join, /leave, /voice
 │   ├── model.py              # /model selection
 │   ├── config_cmd.py         # /config command
@@ -168,12 +167,11 @@ Bot: This document discusses quarterly sales performance,<br>
 </td> </tr> </table> 
 
 <h4>🎮 Slash Commands</h4>
-<b>🗨️ Conversation Management</b><br>
+<b>📊 Statistics</b><br>
 <br>
 <pre>
 <b>Command           Description</b>
 
-<b>/history</b>          Show conversation length in memory
 <b>/stats</b>            Display detailed statistics
 </pre>
 
@@ -181,7 +179,7 @@ Bot: This document discusses quarterly sales performance,<br>
 Note: Commands that change settings require Administrator permissions 🔒 <br>
 <br>
 <pre>
-The /config command will open up a dialog box where per guild settings can be adjusted.
+The <b>/config</b> command will open up a dialog box where per guild settings can be adjusted.
 
     Edit System Prompt            Set a custom system prompt that gets injected in every interaction with the LLM
                                   This will greatly affect how to bot behaves.
@@ -211,16 +209,16 @@ The /config command will open up a dialog box where per guild settings can be ad
 <h4>🧠 Model & Voice</h4>
 <b>Command	Description</b><br>
 <pre>
-/model        Select AI model from dropdown menu
-/voice        Choose TTS voice (alloy, echo, fable, nova, onyx, shimmer)
-/join         Join your current voice channel
-/leave        Leave voice channel
+<b>/model</b>        Select AI model from dropdown menu
+<b>/voice</b>        Choose TTS voice (alloy, echo, fable, nova, onyx, shimmer)
+<b>/join</b>         Join your current voice channel
+<b>/leave</b>        Leave voice channel
 </pre>
 <br>
 <h4>❓ Help</h4>
 <b>Command	Description</b>b><br>
 <pre>
-/help         Show all commands and usage instructions
+<b>/help</b>         Show all commands and usage instructions
 </pre>
 <hr>
 <h4>🔧 Advanced Configuration</h4>
