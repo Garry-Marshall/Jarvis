@@ -30,15 +30,14 @@ def setup_help_command(tree: app_commands.CommandTree):
 • Prefix a message with `*` to prevent the bot from responding  
 
 ---
-### ⚙️ Configuration (`/config`)
+### ⚙️ Configuration
 *(Some options require admin permissions)*
+• `/config` — Opens the config dialog box
 
 ---
 ### 🧠 Conversation Management
-• `/reset` — Clear conversation history and start fresh  
 • `/history` — Show number of messages in conversation history  
 • `/stats` — Display detailed conversation statistics  
-• `/stats_reset` — Reset statistics for this channel  
 
 ---
 ### 🧠 Model Management
