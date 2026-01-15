@@ -29,8 +29,11 @@ def setup_help_command(tree: app_commands.CommandTree):
 • Prefix a message with `*` to prevent the bot from responding  
 ---
 ### ⚙️ Configuration
-*(Some options require admin permissions)*
+*(Requires admin permissions)*
 • `/config` — Opens the config dialog box
+• `/add_channel` — bot will monitor this channel for messages  
+• `/remove_channel` — bot will stop monitoring this channel
+• `/list_channels` — display all channels the bot monitors
 ---
 ### 🧠 Conversation Management
 • `/stats` — Display detailed conversation statistics
