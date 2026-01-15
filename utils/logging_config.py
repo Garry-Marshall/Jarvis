@@ -77,30 +77,41 @@ def guild_debug_log(
     level: str, 
     message: str, 
     *args,
-    guild_settings: dict = None
+    **kwargs
 ):
     """
     Log debug messages for guilds with debug enabled.
+    Automatically fetches guild settings from the settings manager.
     
     Args:
         guild_id: The guild ID to check for debug settings
         level: Log level ("info" or "debug")
         message: Message format string
         *args: Arguments for message formatting
-        guild_settings: Guild settings dictionary (optional)
+    
+    Key Changes in This Version:
+    - Uses root logger (logging.getLogger()) instead of module logger for consistent output
+    - Logs errors when settings can't be loaded (instead of silently failing)
+    - This ensures debug messages actually reach the console and log files
     """
-    logger = logging.getLogger(__name__)
+    # Use root logger for consistent output - THIS IS THE KEY CHANGE
+    logger = logging.getLogger()
     
-    # Check if debug is enabled for this guild
-    if guild_settings is None:
-        guild_settings = {}
+    # Skip if no guild_id
+    if not guild_id:
+        return
     
-    if guild_id and guild_id in guild_settings:
-        debug_enabled = guild_settings[guild_id].get("debug", False)
-        debug_level = guild_settings[guild_id].get("debug_level", "info")
-    else:
-        debug_enabled = False
-        debug_level = "info"
+    # Fetch settings from the settings manager
+    try:
+        from utils.settings_manager import get_settings_manager
+        settings_mgr = get_settings_manager()
+        
+        debug_enabled = settings_mgr.is_debug_enabled(guild_id)
+        debug_level = settings_mgr.get_debug_level(guild_id)
+    except Exception as e:
+        # Log the error so user knows something is wrong - IMPROVED ERROR HANDLING
+        logger.error(f"guild_debug_log: Failed to get settings for guild {guild_id}: {e}")
+        return
     
     # Skip if debug not enabled
     if not debug_enabled:
@@ -119,7 +130,7 @@ def guild_debug_log(
         message = f"{message} (format error with args: {args})"
     
     # Log with guild prefix
-    log_message = f"[GUILD-{guild_id}] {message}"
+    log_message = f"[GUILD-{guild_id} DEBUG] {message}"
     
     if level == "debug":
         logger.debug(log_message)

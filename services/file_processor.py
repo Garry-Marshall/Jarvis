@@ -13,13 +13,14 @@ from pypdf import PdfReader
 
 from config.settings import ALLOW_IMAGES, MAX_IMAGE_SIZE, ALLOW_TEXT_FILES, MAX_TEXT_FILE_SIZE, ALLOW_PDF, MAX_PDF_SIZE
 from config.constants import TEXT_FILE_EXTENSIONS, FILE_ENCODINGS, MAX_PDF_CHARS, MSG_FAILED_TO_PROCESS_IMAGE, MSG_FAILED_TO_PROCESS_FILE, MSG_FAILED_TO_DECODE_FILE, MSG_FAILED_TO_PROCESS_PDF
-from utils.file_utils import validate_file_size, log_file_processing
+from utils.logging_config import guild_debug_log
+from utils.file_utils import validate_file_size, log_file_processing, format_file_size
 
 
 logger = logging.getLogger(__name__)
 
 
-async def process_image_attachment(attachment, channel) -> Optional[Dict]:
+async def process_image_attachment(attachment, channel, guild_id: Optional[int] = None) -> Optional[Dict]:
     """
     Download and convert an image attachment to base64 for the vision model.
     
@@ -63,6 +64,7 @@ async def process_image_attachment(attachment, channel) -> Optional[Dict]:
             media_type = 'image/jpeg'
         
         log_file_processing(attachment.filename, attachment.size, "image")
+        guild_debug_log(guild_id, "debug", f"Processed image: {attachment.filename} ({format_file_size(attachment.size)}) as {media_type}")
         
         return {
             "type": "image_url",
@@ -73,12 +75,12 @@ async def process_image_attachment(attachment, channel) -> Optional[Dict]:
         
     except Exception as e:
         logger.error(f"Error processing image {attachment.filename}: {e}")
-        #await channel.send(f"❌ Failed to process image **{attachment.filename}**: {str(e)}")
+        #await channel.send(f"âŒ Failed to process image **{attachment.filename}**: {str(e)}")
         await channel.send(MSG_FAILED_TO_PROCESS_IMAGE.format(attachment=attachment.filename, exception=str(e)))
         return None
 
 
-async def process_text_attachment(attachment, channel) -> Optional[str]:
+async def process_text_attachment(attachment, channel, guild_id: Optional[int] = None) -> Optional[str]:
     """
     Download and read a text file attachment.
     
@@ -116,6 +118,7 @@ async def process_text_attachment(attachment, channel) -> Optional[str]:
             try:
                 text_content = file_data.decode(encoding)
                 log_file_processing(attachment.filename, attachment.size, "text file")
+                guild_debug_log(guild_id, "debug", f"Processed text file: {attachment.filename} ({format_file_size(attachment.size)})")
                 return f"\n\n--- Content of {attachment.filename} ---\n{text_content}\n--- End of {attachment.filename} ---\n"
             except UnicodeDecodeError:
                 continue
@@ -124,19 +127,19 @@ async def process_text_attachment(attachment, channel) -> Optional[str]:
         logger.error(f"Could not decode text file {attachment.filename}")
         await channel.send(
             MSG_FAILED_TO_DECODE_FILE.format(attachment=attachment.filename)
-            #f"❌ Could not decode text file **{attachment.filename}**. "
+            #f"âŒ Could not decode text file **{attachment.filename}**. "
             #f"Please ensure it's a valid text file."
         )
         return None
         
     except Exception as e:
         logger.error(f"Error processing text file {attachment.filename}: {e}")
-        #await channel.send(f"❌ Failed to process text file **{attachment.filename}**: {str(e)}")
+        #await channel.send(f"âŒ Failed to process text file **{attachment.filename}**: {str(e)}")
         await channel.send(MSG_FAILED_TO_PROCESS_FILE.format(attachment=attachment.filename, exception=str(e)))
         return None
 
 
-async def process_pdf_attachment(attachment, channel) -> Optional[str]:
+async def process_pdf_attachment(attachment, channel, guild_id: Optional[int] = None) -> Optional[str]:
     """
     Download and extract text from a PDF with character truncation.
     
@@ -177,7 +180,7 @@ async def process_pdf_attachment(attachment, channel) -> Optional[str]:
                 if current_length + len(page_text) > MAX_PDF_CHARS:
                     remaining_space = MAX_PDF_CHARS - current_length
                     extracted_text.append(f"--- Page {i+1} (TRUNCATED) ---\n{page_text[:remaining_space]}")
-                    logger.info(f"✂️ PDF {attachment.filename} truncated at page {i+1}")
+                    logger.info(f"âœ‚ï¸ PDF {attachment.filename} truncated at page {i+1}")
                     break
                 
                 extracted_text.append(f"--- Page {i+1} ---\n{page_text}")
@@ -190,17 +193,18 @@ async def process_pdf_attachment(attachment, channel) -> Optional[str]:
         
         # REFACTORED: Use centralized logging
         log_file_processing(attachment.filename, len(full_content), "PDF")
+        guild_debug_log(guild_id, "debug", f"Processed PDF: {attachment.filename}, extracted {len(full_content)} characters from {len(extracted_text)} page(s)")
         
         return f"\n\n--- Content of PDF: {attachment.filename} ---\n{full_content}\n--- End of PDF ---\n"
         
     except Exception as e:
         logger.error(f"Error processing PDF {attachment.filename}: {e}")
-        #await channel.send(f"❌ Failed to process PDF **{attachment.filename}**: {str(e)}")
+        #await channel.send(f"âŒ Failed to process PDF **{attachment.filename}**: {str(e)}")
         await channel.send(MSG_FAILED_TO_PROCESS_PDF.format(attachment=attachment.filename, exception=str(e)))
         return None
 
 
-async def process_all_attachments(attachments, channel) -> tuple[List[Dict], str]:
+async def process_all_attachments(attachments, channel, guild_id: Optional[int] = None) -> tuple[List[Dict], str]:
     """
     Process all attachments in a message.
     
@@ -216,19 +220,19 @@ async def process_all_attachments(attachments, channel) -> tuple[List[Dict], str
     
     for attachment in attachments:
         # Try image processing
-        image_data = await process_image_attachment(attachment, channel)
+        image_data = await process_image_attachment(attachment, channel, guild_id)
         if image_data:
             images.append(image_data)
             continue  # Don't process as other types if it's an image
         
         # Try PDF processing
-        pdf_content = await process_pdf_attachment(attachment, channel)
+        pdf_content = await process_pdf_attachment(attachment, channel, guild_id)
         if pdf_content:
             text_files_content += pdf_content
             continue
         
         # Try text file processing
-        text_content = await process_text_attachment(attachment, channel)
+        text_content = await process_text_attachment(attachment, channel, guild_id)
         if text_content:
             text_files_content += text_content
     

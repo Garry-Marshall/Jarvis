@@ -8,6 +8,7 @@ import logging
 from typing import AsyncGenerator, List, Dict, Optional
 
 from config.settings import LMSTUDIO_URL, MAX_HISTORY
+from utils.logging_config import guild_debug_log
 from config.constants import DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS, MIN_TEMPERATURE, MAX_TEMPERATURE, HISTORY_MULTIPLIER
 
 
@@ -132,7 +133,8 @@ async def stream_completion(
     messages: List[Dict],
     model: str,
     temperature: float = 0.7,
-    max_tokens: int = -1
+    max_tokens: int = -1,
+    guild_id: Optional[int] = None
 ) -> AsyncGenerator[str, None]:
     """
     Stream a completion from LMStudio API.
@@ -142,6 +144,7 @@ async def stream_completion(
         model: Model identifier to use
         temperature: Sampling temperature (0.0-2.0)
         max_tokens: Maximum tokens to generate (-1 for unlimited)
+        guild_id: Guild ID for debug logging (optional)
         
     Yields:
         Content chunks as they arrive
@@ -164,6 +167,8 @@ async def stream_completion(
         temperature,
         max_tokens
     )
+    
+    guild_debug_log(guild_id, "debug", f"LMStudio API payload: {len(messages)} messages, model={model}")
     
     try:
         async with aiohttp.ClientSession() as session:

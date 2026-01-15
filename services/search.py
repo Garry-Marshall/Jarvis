@@ -4,6 +4,7 @@ Provides search functionality with cooldown management.
 """
 import logging
 import time
+from utils.logging_config import guild_debug_log
 from typing import Optional, Dict
 
 from ddgs import DDGS
@@ -44,7 +45,8 @@ async def get_web_context(
     max_results: int = MAX_SEARCH_RESULTS,
     region: str = "wt-wt",  # Worldwide
     safesearch: str = "moderate",
-    backend: str = "auto"  # Let DDGS choose best backend
+    backend: str = "auto",  # Let DDGS choose best backend
+    guild_id: Optional[int] = None
 ) -> str:
     """
     Fetch search snippets from DDGS metasearch.
@@ -55,10 +57,14 @@ async def get_web_context(
         region: Search region (wt-wt for worldwide, us-en, etc.)
         safesearch: Safe search setting (on, moderate, off)
         backend: Search backend(s) to use (auto, duckduckgo, google, bing, etc.)
+        guild_id: Guild ID for debug logging (optional)
         
     Returns:
         Formatted search results string, or empty string if failed
     """
+    guild_debug_log(guild_id, "info", f"Web search initiated: '{query[:50]}...'")
+    guild_debug_log(guild_id, "debug", f"Search params: max_results={max_results}, region={region}, backend={backend}")
+    
     try:
         # Initialize DDGS with timeout and optional proxy
         ddgs = DDGS(timeout=10)  # Increase timeout for reliability
@@ -74,7 +80,10 @@ async def get_web_context(
         
         if not results:
             logger.warning(f"No search results for: {query}")
+            guild_debug_log(guild_id, "info", "Web search returned no results")
             return ""
+        
+        guild_debug_log(guild_id, "info", f"Web search found {len(results)} result(s)")
         
         # Format results with source attribution
         formatted_results = []

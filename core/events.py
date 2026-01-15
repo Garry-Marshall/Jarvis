@@ -219,11 +219,26 @@ def setup_events(bot):
             # Get guild_id for settings (None for DMs)
             guild_id = message.guild.id if not is_dm else None
             
+            # DIAGNOSTIC: Log with regular logger to verify it's working
+            logger.info(f"Processing message from {message.author.display_name} | guild_id={guild_id} | conversation_id={conversation_id}")
+            
+            # Check debug settings and log diagnostic
+            from utils.settings_manager import get_settings_manager
+            settings_mgr = get_settings_manager()
+            debug_enabled = settings_mgr.is_debug_enabled(guild_id) if guild_id else False
+            debug_level = settings_mgr.get_debug_level(guild_id) if guild_id else "info"
+            
+            logger.info(f"Debug settings: enabled={debug_enabled}, level={debug_level}")
+            
+            guild_debug_log(guild_id, "info", f"Processing message from {message.author.display_name} in conversation {conversation_id}")
+            guild_debug_log(guild_id, "debug", f"Message content: '{message.content[:200]}{'...' if len(message.content) > 200 else ''}'")
+            
             # Process attachments and track tool usage
             if message.attachments:
                 await update_status(status_msg, MSG_PROCESSING_ATTACHMENTS, edit_tracker)
+                guild_debug_log(guild_id, "debug", f"Processing {len(message.attachments)} attachment(s): {[a.filename for a in message.attachments]}")
             
-            images, text_files_content = await process_all_attachments(message.attachments, message.channel)
+            images, text_files_content = await process_all_attachments(message.attachments, message.channel, guild_id)
             
             # Track successful image analysis
             if images:
@@ -249,6 +264,7 @@ def setup_events(bot):
             # Load initial context if needed
             if len(get_conversation_history(conversation_id)) == 0 and not is_context_loaded(conversation_id) and CONTEXT_MESSAGES > 0:
                 await update_status(status_msg, MSG_LOADING_CONTEXT, edit_tracker)
+                guild_debug_log(guild_id, "debug", "Loading initial conversation context")
                 recent_context = await get_recent_context(message.channel, CONTEXT_MESSAGES)
                 for ctx_msg in recent_context:
                     add_message_to_history(conversation_id, ctx_msg["role"], ctx_msg["content"])
@@ -267,13 +283,13 @@ def setup_events(bot):
                     cooldown = check_search_cooldown(guild_id)
                     if cooldown:
                         await message.channel.send(
-                            f"â±ï¸ Search is on cooldown. Please wait {cooldown} more seconds.",
+                            f"⏱️ Search is on cooldown. Please wait {cooldown} more seconds.",
                             delete_after=10
                         )
                     else:
                         await update_status(status_msg, MSG_SEARCHING_WEB, edit_tracker)
-                        logger.info(f"ðŸ” Triggering web search for: '{combined_message[:50]}...'")
-                        web_context = await get_web_context(combined_message)
+                        logger.info(f"🔍 Triggering web search for: '{combined_message[:50]}...'")
+                        web_context = await get_web_context(combined_message, guild_id=guild_id)
                         
                         if web_context:
                             update_search_cooldown(guild_id)
@@ -309,7 +325,7 @@ def setup_events(bot):
                 
                 # Truncate if too long
                 if len(final_system_prompt) > MAX_SYSTEM_PROMPT_CONTEXT:
-                    logger.warning(f"âš ï¸ Total system context too large ({len(final_system_prompt)}). Truncating to {MAX_SYSTEM_PROMPT_CONTEXT // 1000}k.")
+                    logger.warning(f"⚠️ Total system context too large ({len(final_system_prompt)}). Truncating to {MAX_SYSTEM_PROMPT_CONTEXT // 1000}k.")
                     truncated = final_system_prompt[:SYSTEM_PROMPT_TRUNCATE_TO]
                     last_paragraph = truncated.rfind('\n\n')
                     if last_paragraph > SYSTEM_PROMPT_SAFE_TRUNCATE:
@@ -329,22 +345,38 @@ def setup_events(bot):
             # Build API messages
             api_messages = build_api_messages(get_conversation_history(conversation_id), final_system_prompt)
             
+            guild_debug_log(guild_id, "debug", f"=== API REQUEST ===")
+            guild_debug_log(guild_id, "debug", f"System prompt: {final_system_prompt[:500]}{'...' if len(final_system_prompt) > 500 else ''}")
+            guild_debug_log(guild_id, "debug", f"Total API messages: {len(api_messages)}")
+            
+            # Log last user message (most recent)
+            for msg in reversed(api_messages):
+                if msg["role"] == "user":
+                    content_preview = str(msg["content"])[:300]
+                    guild_debug_log(guild_id, "debug", f"Latest user message: {content_preview}{'...' if len(str(msg['content'])) > 300 else ''}")
+                    break
+            
             # Get model and settings
             model_to_use = get_selected_model(guild_id)
             temperature = get_guild_temperature(guild_id)
             max_tokens = get_guild_max_tokens(guild_id)
             
+            guild_debug_log(guild_id, "debug", f"Using model: {model_to_use}, temp: {temperature}, max_tokens: {max_tokens}")
+            guild_debug_log(guild_id, "debug", f"Conversation history length: {len(get_conversation_history(conversation_id))} messages")
+            
             # Estimate prompt tokens for stats
             estimated_prompt_tokens = estimate_tokens(str(api_messages))
+            guild_debug_log(guild_id, "debug", f"Estimated prompt tokens: {estimated_prompt_tokens}")
             
             # Stream the response
             await update_status(status_msg, MSG_WRITING_RESPONSE, edit_tracker)
+            guild_debug_log(guild_id, "info", "Streaming response from LMStudio")
             
             start_time = time.time()
             response_text = ""
             update_interval = STREAM_UPDATE_INTERVAL
             
-            async for chunk in stream_completion(api_messages, model_to_use, temperature, max_tokens):
+            async for chunk in stream_completion(api_messages, model_to_use, temperature, max_tokens, guild_id):
                 response_text += chunk
                 
                 current_time = time.time()
@@ -386,6 +418,22 @@ def setup_events(bot):
                 raw_token_count = estimate_tokens(response_text)
                 cleaned_token_count = estimate_tokens(final_response)
                 
+                # DEBUG: Log the actual response content
+                guild_debug_log(guild_id, "debug", "=== RAW LLM RESPONSE (WITH THINKING BLOCKS) ===")
+                guild_debug_log(guild_id, "debug", f"Full raw response:\n{response_text}")
+                guild_debug_log(guild_id, "debug", "=== CLEANED RESPONSE (THINKING REMOVED) ===")
+                guild_debug_log(guild_id, "debug", f"Final response:\n{final_response}")
+                guild_debug_log(guild_id, "debug", "=" * 50)
+                
+                guild_debug_log(
+                    guild_id, "info",
+                    f"Response completed in {response_time:.2f}s | Raw: {raw_token_count} tokens | Cleaned: {cleaned_token_count} tokens"
+                )
+                guild_debug_log(
+                    guild_id, "debug",
+                    f"Thinking tokens removed: {raw_token_count - cleaned_token_count}"
+                )
+                
                 # Update statistics
                 update_stats(
                     conversation_id,
@@ -421,15 +469,18 @@ def setup_events(bot):
                             if voice_client and voice_client.is_connected() and not voice_client.is_playing():
                                 try:
                                     guild_voice = get_guild_voice(guild_id)
+                                    guild_debug_log(guild_id, "debug", f"Generating TTS audio with voice: {guild_voice}")
                                     audio_data = await text_to_speech(final_response, guild_voice)
                                     
                                     if audio_data:
                                         update_stats(conversation_id, tool_used="tts_voice")
+                                        guild_debug_log(guild_id, "info", f"TTS audio generated successfully ({len(audio_data)} bytes)")
                                         
                                         ts = int(time.time())
                                         temp_audio = f"temp_tts_{guild_id}_{ts}.mp3"
                                         with open(temp_audio, 'wb') as f:
                                             f.write(audio_data)
+                                        guild_debug_log(guild_id, "debug", f"Playing TTS audio file: {temp_audio}")
                                         
                                         def _safe_remove(path: str):
                                             max_attempts = 10
