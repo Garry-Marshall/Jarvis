@@ -25,7 +25,7 @@ def setup_logging():
     
     # Configure logging to both file and console
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format='%(asctime)s [%(levelname)s] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
         handlers=[
@@ -40,6 +40,13 @@ def setup_logging():
             logging.StreamHandler()
         ]
     )
+
+    # Reduce verbosity of discord.py and other libraries
+    logging.getLogger('discord').setLevel(logging.INFO)
+    logging.getLogger('discord.http').setLevel(logging.WARNING)
+    logging.getLogger('discord.gateway').setLevel(logging.WARNING)
+    logging.getLogger('discord.client').setLevel(logging.INFO)
+
     
     logger = logging.getLogger(__name__)
     logger.info(f"Logging initialized. Log file: {log_filename}")

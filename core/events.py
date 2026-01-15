@@ -122,7 +122,7 @@ def setup_events(bot):
         """Called when the bot successfully connects to Discord."""
         log_effective_config()
         logger.info(
-            "Logger initialized | python_level=%s",
+            "Logger initialized | log_level=%s",
             logging.getLevelName(logger.getEffectiveLevel())
         )
         
@@ -135,12 +135,12 @@ def setup_events(bot):
         try:
             models_loaded = await initialize_models()
             if not models_loaded:
-                logger.error("âš ï¸ CRITICAL: No models loaded from LMStudio!")
-                logger.error("âš ï¸ The bot will not be able to respond to messages.")
-                logger.error("âš ï¸ Please ensure LMStudio is running with at least one model loaded.")
+                logger.error("⚠️ CRITICAL: No models loaded from LMStudio!")
+                logger.error("⚠️ The bot will not be able to respond to messages.")
+                logger.error("⚠️ Please ensure LMStudio is running with at least one model loaded.")
         except Exception as e:
-            logger.error(f"âš ï¸ CRITICAL: Failed to initialize models: {e}", exc_info=True)
-            logger.error("âš ï¸ The bot may not function correctly.")
+            logger.error(f"⚠️ CRITICAL: Failed to initialize models: {e}", exc_info=True)
+            logger.error("⚠️ The bot may not function correctly.")
         
         # Log channel details
         for channel_id in CHANNEL_IDS:
