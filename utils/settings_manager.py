@@ -73,6 +73,11 @@ class SettingsManager:
             "type": str,
             "default": ALLTALK_VOICE,
             "validator": lambda v: v in ["alloy", "echo", "fable", "nova", "onyx", "shimmer"]
+        },
+        "monitored_channels": {
+            "type": list,
+            "default": [],
+            "validator": lambda v: isinstance(v, list) and all(isinstance(x, int) for x in v)
         }
     }
     
@@ -371,3 +376,79 @@ def clear_guild_settings(guild_id: int) -> None:
 
 # For backward compatibility, keep the old dict reference
 guild_settings = {}
+
+# ============================================================================
+# MONITORED CHANNELS MANAGEMENT
+# ============================================================================
+
+def get_monitored_channels(guild_id: int) -> set[int]:
+    """
+    Get the set of monitored channel IDs for a guild.
+    
+    Args:
+        guild_id: Guild ID
+        
+    Returns:
+        Set of channel IDs where the bot should listen
+    """
+    channels = get_settings_manager().get(guild_id, "monitored_channels", [])
+    return set(channels) if channels else set()
+
+
+def add_monitored_channel(guild_id: int, channel_id: int) -> bool:
+    """
+    Add a channel to the monitored channels list for a guild.
+    
+    Args:
+        guild_id: Guild ID
+        channel_id: Channel ID to add
+        
+    Returns:
+        True if channel was added, False if already exists
+    """
+    channels = get_monitored_channels(guild_id)
+    
+    if channel_id in channels:
+        return False
+    
+    channels.add(channel_id)
+    set_guild_setting(guild_id, "monitored_channels", list(channels))
+    logger.info(f"Added channel {channel_id} to monitored list for guild {guild_id}")
+    return True
+
+
+def remove_monitored_channel(guild_id: int, channel_id: int) -> bool:
+    """
+    Remove a channel from the monitored channels list for a guild.
+    
+    Args:
+        guild_id: Guild ID
+        channel_id: Channel ID to remove
+        
+    Returns:
+        True if channel was removed, False if not in list
+    """
+    channels = get_monitored_channels(guild_id)
+    
+    if channel_id not in channels:
+        return False
+    
+    channels.remove(channel_id)
+    set_guild_setting(guild_id, "monitored_channels", list(channels))
+    logger.info(f"Removed channel {channel_id} from monitored list for guild {guild_id}")
+    return True
+
+
+def is_channel_monitored(guild_id: int, channel_id: int) -> bool:
+    """
+    Check if a channel is being monitored in a guild.
+    
+    Args:
+        guild_id: Guild ID
+        channel_id: Channel ID to check
+        
+    Returns:
+        True if channel is monitored
+    """
+    channels = get_monitored_channels(guild_id)
+    return channel_id in channels

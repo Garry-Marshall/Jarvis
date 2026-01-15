@@ -29,7 +29,7 @@ from config.constants import (
 
 from utils.text_utils import estimate_tokens, remove_thinking_tags, is_inside_thinking_tags, split_message
 from utils.logging_config import log_effective_config, guild_debug_log
-from utils.settings_manager import get_guild_setting, is_tts_enabled_for_guild, get_guild_voice, get_guild_temperature, get_guild_max_tokens, is_search_enabled
+from utils.settings_manager import get_guild_setting, is_tts_enabled_for_guild, get_guild_voice, get_guild_temperature, get_guild_max_tokens, is_search_enabled, is_channel_monitored
 from utils.stats_manager import add_message_to_history, update_stats, is_context_loaded, set_context_loaded, get_conversation_history, cleanup_old_conversations
 
 from services.lmstudio import build_api_messages, stream_completion
@@ -192,8 +192,14 @@ def setup_events(bot):
             conversation_id = message.author.id
         else:
             # For guild channels, check if it's a monitored channel
-            if message.channel.id not in CHANNEL_IDS:
-                return
+            guild_id = message.guild.id
+            
+            # Check guild-specific monitored channels
+            if not is_channel_monitored(guild_id, message.channel.id):
+                # Fall back to global CHANNEL_IDS for backward compatibility
+                if message.channel.id not in CHANNEL_IDS:
+                    return
+            
             conversation_id = message.channel.id
         
         # Ignore messages starting with * (user wants to exclude from bot)
