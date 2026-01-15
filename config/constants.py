@@ -26,34 +26,53 @@ VOICE_DESCRIPTIONS = {
 
 # Triggers that indicate a web search might be needed
 SEARCH_TRIGGERS = [
-    "search for", 
-    "look up", 
-    "find information", 
-    "current news",
-    "current weather",
-    "latest", 
-    "what's happening",
-    "what is happening",
-    "who's currently",
-    "who is currently", 
-    "weather in",
-    "temperature in",
-    "today's",
-    "who is the current", 
-    "who's the current",
-    "recent", 
-    "breaking news"
+    # Existing ones...
+    "search for", "look up", "find information", 
+    "current news", "current weather", "latest", 
+    "what's happening", "what is happening",
+    "who's currently", "who is currently", 
+    "weather in", "temperature in", "today's",
+    "who is the current", "who's the current",
+    "recent", "breaking news",
+    
+    # Price/cost queries
+    "how much does", "how much is", "price of", "cost of",
+    "how expensive", "how cheap",
+    
+    # Location queries
+    "where is", "where can i find", "where to",
+    
+    # Time-sensitive queries
+    "when will", "when does", "schedule for",
+    
+    # Stock/financial (very time-sensitive)
+    "stock price", "exchange rate", "crypto price",
+    
+    # Real-time status
+    "currently happening",
+    
+    # Updates/changes
+    "update on", "updates about", "changes to", "new version",
+    
+    # Statistics/data
+    "statistics", "data on", "numbers for",
 ]
 
 # Negative triggers that indicate user is referring to local content
 NEGATIVE_SEARCH_TRIGGERS = [
-    "this document", 
-    "this file", 
-    "this pdf", 
-    "attached", 
-    "the content", 
-    "summarize this", 
-    "a document"
+    # File references
+    "this document", "this file", "this pdf", 
+    "attached", "the content", "summarize this", "a document",
+    "in the image", "in the picture", "in this attachment",
+    "in the pdf", "in this text", "in the code", "in this file",
+    
+    # Context references
+    "you just", "you said", "you mentioned", "earlier you",
+    "above message", "previous message", "your last",
+    
+    # Analysis of provided content
+    "analyze this", "explain this", "review this",
+    "what does this", "tell me about this",
 ]
 
 # Minimum message length to trigger automatic search
