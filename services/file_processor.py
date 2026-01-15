@@ -1,6 +1,8 @@
 """
 File processing service for Discord attachments.
 Handles images, PDFs, and text files.
+
+REFACTORED VERSION: Uses centralized file validation utilities.
 """
 import base64
 import io
@@ -10,7 +12,8 @@ from typing import Optional, List, Dict
 from pypdf import PdfReader
 
 from config.settings import ALLOW_IMAGES, MAX_IMAGE_SIZE, ALLOW_TEXT_FILES, MAX_TEXT_FILE_SIZE, ALLOW_PDF, MAX_PDF_SIZE
-from config.constants import TEXT_FILE_EXTENSIONS, FILE_ENCODINGS, MAX_PDF_CHARS, BYTES_PER_MB
+from config.constants import TEXT_FILE_EXTENSIONS, FILE_ENCODINGS, MAX_PDF_CHARS, MSG_FAILED_TO_PROCESS_IMAGE, MSG_FAILED_TO_PROCESS_FILE, MSG_FAILED_TO_DECODE_FILE, MSG_FAILED_TO_PROCESS_PDF
+from utils.file_utils import validate_file_size, log_file_processing
 
 
 logger = logging.getLogger(__name__)
@@ -33,12 +36,11 @@ async def process_image_attachment(attachment, channel) -> Optional[Dict]:
     if not attachment.content_type or not attachment.content_type.startswith('image/'):
         return None
     
-    if attachment.size > MAX_IMAGE_SIZE * BYTES_PER_MB:
-        logger.warning(f"Image too large: {attachment.size / BYTES_PER_MB:.2f}MB (max: {MAX_IMAGE_SIZE}MB)")
-        await channel.send(
-            f"âš ï¸ Image **{attachment.filename}** is too large "
-            f"({attachment.size / BYTES_PER_MB:.2f}MB). Maximum size is {MAX_IMAGE_SIZE}MB."
-        )
+    # REFACTORED: Use centralized validation
+    is_valid, error_msg = await validate_file_size(
+        attachment, MAX_IMAGE_SIZE, "Image", channel
+    )
+    if not is_valid:
         return None
     
     try:
@@ -60,7 +62,7 @@ async def process_image_attachment(attachment, channel) -> Optional[Dict]:
             logger.warning(f"Unknown image type '{attachment.content_type}', defaulting to image/jpeg")
             media_type = 'image/jpeg'
         
-        logger.info(f"Processing image: {attachment.filename} ({attachment.size / 1024:.2f}KB, {media_type})")
+        log_file_processing(attachment.filename, attachment.size, "image")
         
         return {
             "type": "image_url",
@@ -71,7 +73,8 @@ async def process_image_attachment(attachment, channel) -> Optional[Dict]:
         
     except Exception as e:
         logger.error(f"Error processing image {attachment.filename}: {e}")
-        await channel.send(f"âŒ Failed to process image **{attachment.filename}**: {str(e)}")
+        #await channel.send(f"❌ Failed to process image **{attachment.filename}**: {str(e)}")
+        await channel.send(MSG_FAILED_TO_PROCESS_IMAGE.format(attachment=attachment.filename, exception=str(e)))
         return None
 
 
@@ -99,12 +102,10 @@ async def process_text_attachment(attachment, channel) -> Optional[str]:
     if not is_text:
         return None
     
-    if attachment.size > MAX_TEXT_FILE_SIZE * BYTES_PER_MB:
-        logger.warning(f"Text file too large: {attachment.size / BYTES_PER_MB:.2f}MB (max: {MAX_TEXT_FILE_SIZE}MB)")
-        await channel.send(
-            f"âš ï¸ Text file **{attachment.filename}** is too large "
-            f"({attachment.size / BYTES_PER_MB:.2f}MB). Maximum size is {MAX_TEXT_FILE_SIZE}MB."
-        )
+    is_valid, error_msg = await validate_file_size(
+        attachment, MAX_TEXT_FILE_SIZE, "Text file", channel
+    )
+    if not is_valid:
         return None
     
     try:
@@ -114,7 +115,7 @@ async def process_text_attachment(attachment, channel) -> Optional[str]:
         for encoding in FILE_ENCODINGS:
             try:
                 text_content = file_data.decode(encoding)
-                logger.info(f"Processing text file: {attachment.filename} ({attachment.size / 1024:.2f}KB)")
+                log_file_processing(attachment.filename, attachment.size, "text file")
                 return f"\n\n--- Content of {attachment.filename} ---\n{text_content}\n--- End of {attachment.filename} ---\n"
             except UnicodeDecodeError:
                 continue
@@ -122,14 +123,16 @@ async def process_text_attachment(attachment, channel) -> Optional[str]:
         # If all encodings failed
         logger.error(f"Could not decode text file {attachment.filename}")
         await channel.send(
-            f"âŒ Could not decode text file **{attachment.filename}**. "
-            f"Please ensure it's a valid text file."
+            MSG_FAILED_TO_DECODE_FILE.format(attachment=attachment.filename)
+            #f"❌ Could not decode text file **{attachment.filename}**. "
+            #f"Please ensure it's a valid text file."
         )
         return None
         
     except Exception as e:
         logger.error(f"Error processing text file {attachment.filename}: {e}")
-        await channel.send(f"âŒ Failed to process text file **{attachment.filename}**: {str(e)}")
+        #await channel.send(f"❌ Failed to process text file **{attachment.filename}**: {str(e)}")
+        await channel.send(MSG_FAILED_TO_PROCESS_FILE.format(attachment=attachment.filename, exception=str(e)))
         return None
 
 
@@ -152,12 +155,11 @@ async def process_pdf_attachment(attachment, channel) -> Optional[str]:
     if not is_pdf:
         return None
     
-    if attachment.size > MAX_PDF_SIZE * BYTES_PER_MB:
-        logger.warning(f"PDF too large: {attachment.size / BYTES_PER_MB:.2f}MB (max: {MAX_PDF_SIZE}MB)")
-        await channel.send(
-            f"âš ï¸ PDF **{attachment.filename}** is too large "
-            f"({attachment.size / BYTES_PER_MB:.2f}MB). Maximum size is {MAX_PDF_SIZE}MB."
-        )
+    # REFACTORED: Use centralized validation
+    is_valid, error_msg = await validate_file_size(
+        attachment, MAX_PDF_SIZE, "PDF", channel
+    )
+    if not is_valid:
         return None
     
     try:
@@ -175,7 +177,7 @@ async def process_pdf_attachment(attachment, channel) -> Optional[str]:
                 if current_length + len(page_text) > MAX_PDF_CHARS:
                     remaining_space = MAX_PDF_CHARS - current_length
                     extracted_text.append(f"--- Page {i+1} (TRUNCATED) ---\n{page_text[:remaining_space]}")
-                    logger.info(f"âœ‚ï¸ PDF {attachment.filename} truncated at page {i+1}")
+                    logger.info(f"✂️ PDF {attachment.filename} truncated at page {i+1}")
                     break
                 
                 extracted_text.append(f"--- Page {i+1} ---\n{page_text}")
@@ -185,12 +187,16 @@ async def process_pdf_attachment(attachment, channel) -> Optional[str]:
             return f"\n[Note: PDF {attachment.filename} had no extractable text.]\n"
 
         full_content = "\n".join(extracted_text)
-        logger.info(f"Processing PDF: {attachment.filename} ({len(full_content)} chars extracted)")
+        
+        # REFACTORED: Use centralized logging
+        log_file_processing(attachment.filename, len(full_content), "PDF")
+        
         return f"\n\n--- Content of PDF: {attachment.filename} ---\n{full_content}\n--- End of PDF ---\n"
         
     except Exception as e:
         logger.error(f"Error processing PDF {attachment.filename}: {e}")
-        await channel.send(f"âŒ Failed to process PDF **{attachment.filename}**: {str(e)}")
+        #await channel.send(f"❌ Failed to process PDF **{attachment.filename}**: {str(e)}")
+        await channel.send(MSG_FAILED_TO_PROCESS_PDF.format(attachment=attachment.filename, exception=str(e)))
         return None
 
 

@@ -1,6 +1,8 @@
 """
 Utils package initialization.
 Exports all utility functions and managers for easy importing.
+
+REFACTORED VERSION: Includes new file_utils and permissions modules.
 """
 
 # Logging utilities
@@ -55,14 +57,28 @@ from utils.settings_manager import (
     get_guild_temperature,
     get_guild_max_tokens,
     get_guild_system_prompt,
-    is_debug_enabled as settings_is_debug_enabled,  # Alias to avoid conflict
-    get_debug_level as settings_get_debug_level,    # Alias to avoid conflict
+    is_debug_enabled as settings_is_debug_enabled,
+    get_debug_level as settings_get_debug_level,
     is_search_enabled,
     is_tts_enabled_for_guild,
     get_guild_voice,
     get_all_guild_settings,
     clear_guild_settings,
     guild_settings,
+)
+
+# File utilities
+from utils.file_utils import (
+    format_file_size,
+    validate_file_size,
+    log_file_processing,
+)
+
+# Permission utilities
+from utils.permissions import (
+    check_admin_permission,
+    is_guild_admin,
+    require_guild_context,
 )
 
 __all__ = [
@@ -119,4 +135,14 @@ __all__ = [
     'get_all_guild_settings',
     'clear_guild_settings',
     'guild_settings',
+    
+    # File utilities
+    'format_file_size',
+    'validate_file_size',
+    'log_file_processing',
+    
+    # Permission utilities
+    'check_admin_permission',
+    'is_guild_admin',
+    'require_guild_context',
 ]

@@ -11,6 +11,7 @@ from config.settings import ENABLE_TTS
 from config.constants import (
     AVAILABLE_VOICES,
     VOICE_DESCRIPTIONS,
+    MSG_VOICE_CHANGED,
     MSG_SERVER_ONLY,
     MSG_TTS_DISABLED_GLOBAL,
     MSG_TTS_DISABLED_SERVER,
@@ -20,6 +21,7 @@ from config.constants import (
     MSG_LEFT_VOICE,
     MSG_JOINED_VOICE,
     MSG_MOVED_VOICE,
+    MSG_FAILED_TO_JOIN_VOICE,
 )
 from utils.settings_manager import is_tts_enabled_for_guild, get_guild_voice, set_guild_setting
 
@@ -85,7 +87,7 @@ class VoiceSelectDropdown(discord.ui.Select):
         set_guild_setting(guild_id, "selected_voice", selected_voice)
         
         await interaction.response.send_message(
-            f"âœ… Voice changed to: **{selected_voice}**",
+            MSG_VOICE_CHANGED.format(selected_voice=selected_voice),
             ephemeral=True
         )
         logger.info(f"Voice changed to '{selected_voice}' in guild {guild_id} ({interaction.guild.name})")
@@ -133,7 +135,7 @@ def setup_voice_commands(tree: app_commands.CommandTree):
             logger.info(f"Joined voice channel '{voice_channel.name}' in guild {guild_id}")
         except Exception as e:
             logger.error(f"Error joining voice channel in guild {guild_id}: {e}", exc_info=True)
-            await interaction.response.send_message(f"âŒ Failed to join voice channel: {str(e)}", ephemeral=True)
+            await interaction.response.send_message(MSG_FAILED_TO_JOIN_VOICE, ephemeral=True)
     
     @tree.command(name='leave', description='Leave the voice channel')
     async def leave_voice(interaction: discord.Interaction):
@@ -176,7 +178,7 @@ def setup_voice_commands(tree: app_commands.CommandTree):
         current_voice = get_guild_voice(guild_id)
         
         voice_list = "\n".join([
-            f"â€¢ **{voice}** - {VOICE_DESCRIPTIONS.get(voice, 'Unknown')}"
+            f"• **{voice}** - {VOICE_DESCRIPTIONS.get(voice, 'Unknown')}"
             for voice in AVAILABLE_VOICES
         ])
         

@@ -17,19 +17,10 @@ from utils.settings_manager import (
     get_debug_level,
     is_search_enabled
 )
-from utils.stats_manager import (
-    get_conversation_history,
-    clear_conversation_history
-)
+from utils.stats_manager import get_conversation_history, clear_conversation_history
+from utils.permissions import check_admin_permission, require_guild_context
 
 logger = logging.getLogger(__name__)
-
-
-def is_guild_admin(interaction: discord.Interaction) -> bool:
-    """Check if the user has admin permissions in the guild."""
-    if not interaction.guild or not interaction.user:
-        return False
-    return interaction.user.guild_permissions.administrator
 
 
 class SystemPromptModal(discord.ui.Modal, title="System Prompt Configuration"):
@@ -275,10 +266,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Edit System Prompt", style=discord.ButtonStyle.primary, emoji="🧠")
     async def edit_prompt(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can modify settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         current = get_guild_setting(self.guild_id, "system_prompt")
@@ -287,10 +277,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Adjust Temperature", style=discord.ButtonStyle.primary, emoji="🌡️")
     async def adjust_temp(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can modify settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         current = get_guild_temperature(self.guild_id)
@@ -299,10 +288,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Set Max Tokens", style=discord.ButtonStyle.primary, emoji="📊")
     async def set_tokens(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can modify settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         current = get_guild_max_tokens(self.guild_id)
@@ -311,10 +299,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Debug: OFF", style=discord.ButtonStyle.secondary, emoji="🐛", row=1)
     async def toggle_debug(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can modify settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         current = is_debug_enabled(self.guild_id)
@@ -330,10 +317,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Set Debug Level", style=discord.ButtonStyle.secondary, emoji="📝", row=1)
     async def set_debug_level(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can modify settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         current = get_debug_level(self.guild_id)
@@ -342,10 +328,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Web Search: ON", style=discord.ButtonStyle.success, emoji="🔍", row=1)
     async def toggle_search(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can modify settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         current = is_search_enabled(self.guild_id)
@@ -361,10 +346,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="TTS: ON", style=discord.ButtonStyle.success, emoji="🔊", row=1)
     async def toggle_tts(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can modify settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         current = get_guild_setting(self.guild_id, "tts_enabled", True)
@@ -380,10 +364,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Clear Last Message", style=discord.ButtonStyle.danger, emoji="🧹", row=2)
     async def clear_last(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can clear conversation history.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         conversation_id = interaction.channel_id
@@ -413,10 +396,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Clear All History", style=discord.ButtonStyle.danger, emoji="🗑️", row=2)
     async def clear_all_history(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can clear conversation history.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         conversation_id = interaction.channel_id
@@ -438,10 +420,9 @@ class ConfigView(discord.ui.View):
     
     @discord.ui.button(label="Reset to Defaults", style=discord.ButtonStyle.danger, emoji="🔄", row=3)
     async def reset_all(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                "❌ Only admins can reset settings.", ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         # Clear all custom settings (including newly added ones)
@@ -481,11 +462,9 @@ def setup_config_command(tree: app_commands.CommandTree):
     @tree.command(name="config", description="Configure bot settings for this server")
     async def config(interaction: discord.Interaction):
         """Open the configuration panel."""
-        if not interaction.guild:
-            await interaction.response.send_message(
-                "❌ Configuration is only available in servers.",
-                ephemeral=True
-            )
+        is_in_guild, error_msg = require_guild_context(interaction)
+        if not is_in_guild:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         view = ConfigView(interaction.guild.id)

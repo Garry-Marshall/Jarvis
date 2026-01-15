@@ -21,7 +21,7 @@ import logging
 import aiohttp
 
 from config.settings import LMSTUDIO_URL
-from config.constants import DEFAULT_SYSTEM_PROMPT
+from config.constants import DEFAULT_SYSTEM_PROMPT, IMAGE_BASE_TOKENS, TOKENS_PER_IMAGE_TILE, IMAGE_ESTIMATED_TILES
 from commands.model import get_selected_model
 from utils.settings_manager import get_guild_setting
 from utils.stats_manager import get_conversation_history
@@ -147,25 +147,8 @@ def calculate_image_tokens(image_data: dict) -> int:
     Returns:
         Estimated token count for the image
     """
-    # Try to extract dimensions from base64 data if available
-    # For now, we'll use a conservative high estimate since we can't
-    # easily decode base64 images without PIL
     
-    # Conservative approach: assume a "typical" high-res image
-    # Most screenshots/photos are 1920×1080 to 4080×3072
-    # This will overestimate for small images but underestimating is worse
-    
-    # Assume worst-case: large image that fills 3072×2048 after resize
-    # That's 6×4 = 24 tiles maximum
-    BASE_TOKENS = 85
-    TOKENS_PER_TILE = 170
-    
-    # For images we can't inspect, assume medium-large size
-    # (equivalent to ~3072×2048 = 24 tiles, or ~1920×1080 = 8 tiles)
-    # Using 24 tiles as reasonable high estimate
-    ESTIMATED_TILES = 24
-    
-    return BASE_TOKENS + (ESTIMATED_TILES * TOKENS_PER_TILE)
+    return IMAGE_BASE_TOKENS + (IMAGE_ESTIMATED_TILES * TOKENS_PER_IMAGE_TILE)
 
 
 def calculate_conversation_tokens(conversation_id: int, context_limit: int, system_tokens: int) -> dict:

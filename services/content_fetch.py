@@ -80,7 +80,7 @@ async def process_message_urls(message_text: str) -> str:
     
     # Focus on the first URL provided
     target_url = found_urls[0]
-    logger.info(f"ðŸ”— URL detected. Fetching content from: {target_url}")
+    logger.info(f"🔗 URL detected. Fetching content from: {target_url}")
     
     url_content = await fetch_url_content(target_url)
     

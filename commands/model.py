@@ -1,6 +1,8 @@
 """
 Model selection command.
 Handles /model command for switching AI models.
+
+REFACTORED VERSION: Uses centralized permission checking.
 """
 import discord
 from discord import app_commands
@@ -8,13 +10,8 @@ from typing import Dict, List, Optional
 import logging
 
 from services.lmstudio import fetch_available_models
-from config.constants import (
-    DEFAULT_MODEL,
-    DISCORD_SELECT_MAX_OPTIONS,
-    MSG_SERVER_ONLY,
-    MSG_ADMIN_ONLY,
-    MSG_NO_MODELS_AVAILABLE,
-)
+from config.constants import DEFAULT_MODEL, DISCORD_SELECT_MAX_OPTIONS, MSG_NO_MODELS_AVAILABLE
+from utils.permissions import check_admin_permission
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +19,6 @@ logger = logging.getLogger(__name__)
 available_models: List[str] = []
 default_model: str = DEFAULT_MODEL
 selected_models: Dict[int, str] = {}
-
-
-def is_guild_admin(interaction: discord.Interaction) -> bool:
-    """Check if the user has admin permissions in the guild."""
-    if not interaction.guild or not interaction.user:
-        return False
-    return interaction.user.guild_permissions.administrator
 
 
 class ModelSelectView(discord.ui.View):
@@ -73,7 +63,7 @@ class ModelSelectDropdown(discord.ui.Select):
         selected_models[guild_id] = selected_model
         
         await interaction.response.send_message(
-            f"âœ… Model changed to: **{selected_model}**",
+            f"✅ Model changed to: **{selected_model}**",
             ephemeral=True
         )
         logger.info(f"Model changed to '{selected_model}' in guild {guild_id} ({interaction.guild.name})")
@@ -90,20 +80,9 @@ def setup_model_command(tree: app_commands.CommandTree):
     @tree.command(name='model', description='Select AI model (Admin only)')
     async def select_model(interaction: discord.Interaction):
         """Show dropdown to select AI model."""
-        # Check if in a guild (not DM)
-        if not interaction.guild:
-            await interaction.response.send_message(
-                MSG_SERVER_ONLY,
-                ephemeral=True
-            )
-            return
-        
-        # Check admin permissions
-        if not is_guild_admin(interaction):
-            await interaction.response.send_message(
-                MSG_ADMIN_ONLY, 
-                ephemeral=True
-            )
+        has_permission, error_msg = check_admin_permission(interaction)
+        if not has_permission:
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         await interaction.response.defer(ephemeral=True)
@@ -114,7 +93,7 @@ def setup_model_command(tree: app_commands.CommandTree):
         
         if models:
             available_models = models
-            if not default_model or default_model == "local-model":
+            if not default_model or default_model == DEFAULT_MODEL:
                 default_model = models[0]
         
         if not available_models:
@@ -127,7 +106,7 @@ def setup_model_command(tree: app_commands.CommandTree):
         guild_id = interaction.guild.id
         current_model = selected_models.get(guild_id, default_model)
         
-        model_list = "\n".join(f"â€¢ {model}" for model in available_models)
+        model_list = "\n".join(f"• {model}" for model in available_models)
         
         view = ModelSelectView(current_model)
         await interaction.followup.send(
@@ -177,7 +156,7 @@ async def initialize_models() -> bool:
     if models:
         available_models = models
         default_model = models[0]
-        logger.info(f'âœ… Loaded {len(models)} model(s) from LMStudio')
+        logger.info(f'✅ Loaded {len(models)} model(s) from LMStudio')
         logger.info(f'Default model set to: {default_model}')
         return True
     else:

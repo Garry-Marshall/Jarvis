@@ -8,13 +8,8 @@ import logging
 from typing import AsyncGenerator, List, Dict, Optional
 
 from config.settings import LMSTUDIO_URL, MAX_HISTORY
-from config.constants import (
-    DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_TOKENS,
-    MIN_TEMPERATURE,
-    MAX_TEMPERATURE,
-    HISTORY_MULTIPLIER,
-)
+from config.constants import DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS, MIN_TEMPERATURE, MAX_TEMPERATURE, HISTORY_MULTIPLIER
+
 
 logger = logging.getLogger(__name__)
 
