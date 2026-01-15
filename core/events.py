@@ -8,7 +8,7 @@ import time
 import os
 import threading
 
-from config.settings import CHANNEL_IDS, ALLOW_DMS, IGNORE_BOTS, CONTEXT_MESSAGES, ENABLE_TTS, LMSTUDIO_URL
+from config.settings import ALLOW_DMS, IGNORE_BOTS, CONTEXT_MESSAGES, ENABLE_TTS, LMSTUDIO_URL
 from config.constants import (
     DEFAULT_SYSTEM_PROMPT, 
     MAX_MESSAGE_EDITS_PER_WINDOW, 
@@ -29,7 +29,7 @@ from config.constants import (
 
 from utils.text_utils import estimate_tokens, remove_thinking_tags, is_inside_thinking_tags, split_message
 from utils.logging_config import log_effective_config, guild_debug_log
-from utils.settings_manager import get_guild_setting, is_tts_enabled_for_guild, get_guild_voice, get_guild_temperature, get_guild_max_tokens, is_search_enabled, is_channel_monitored
+from utils.settings_manager import get_guild_setting, is_tts_enabled_for_guild, get_guild_voice, get_guild_temperature, get_guild_max_tokens, is_search_enabled, is_channel_monitored, get_monitored_channels
 from utils.stats_manager import add_message_to_history, update_stats, is_context_loaded, set_context_loaded, get_conversation_history, cleanup_old_conversations
 
 from services.lmstudio import build_api_messages, stream_completion
@@ -128,7 +128,6 @@ def setup_events(bot):
         
         logger.info(f'{bot.user} has connected to Discord!')
         logger.info(f'Bot is in {len(bot.guilds)} server(s)')
-        logger.info(f'Listening in {len(CHANNEL_IDS)} channel(s): {CHANNEL_IDS}')
         logger.info(f'LMStudio URL: {LMSTUDIO_URL}')
         
         # Fetch available models from LMStudio with validation
@@ -142,13 +141,31 @@ def setup_events(bot):
             logger.error(f"⚠️ CRITICAL: Failed to initialize models: {e}", exc_info=True)
             logger.error("⚠️ The bot may not function correctly.")
         
-        # Log channel details
-        for channel_id in CHANNEL_IDS:
-            channel = bot.get_channel(channel_id)
-            if channel:
-                logger.info(f'  - #{channel.name} in {channel.guild.name}')
+        # Log monitored channels per guild
+        logger.info("=" * 60)
+        logger.info("MONITORED CHANNELS:")
+        total_monitored = 0
+        
+        for guild in bot.guilds:
+            monitored_channels = get_monitored_channels(guild.id)
+            
+            if monitored_channels:
+                logger.info(f"  📁 {guild.name} (ID: {guild.id}):")
+                for channel_id in sorted(monitored_channels):
+                    channel = guild.get_channel(channel_id)
+                    if channel:
+                        logger.info(f"    ✓ #{channel.name} (ID: {channel_id})")
+                        total_monitored += 1
+                    else:
+                        logger.warning(f"    ⚠ Channel ID {channel_id} not found (may be deleted)")
             else:
-                logger.warning(f'  - Channel ID {channel_id} not found (bot may not have access)')
+                logger.info(f"  📁 {guild.name} (ID: {guild.id}): No channels monitored")
+        
+        if total_monitored == 0:
+            logger.warning("⚠️ No channels are being monitored! Use /add_channel to add channels.")
+        else:
+            logger.info(f"✅ Total monitored channels: {total_monitored}")
+        logger.info("=" * 60)
         
         # Sync slash commands
         try:
@@ -196,9 +213,7 @@ def setup_events(bot):
             
             # Check guild-specific monitored channels
             if not is_channel_monitored(guild_id, message.channel.id):
-                # Fall back to global CHANNEL_IDS for backward compatibility
-                if message.channel.id not in CHANNEL_IDS:
-                    return
+                return  # Don't respond if channel isn't monitored
             
             conversation_id = message.channel.id
         
@@ -289,12 +304,12 @@ def setup_events(bot):
                     cooldown = check_search_cooldown(guild_id)
                     if cooldown:
                         await message.channel.send(
-                            f"⏱️ Search is on cooldown. Please wait {cooldown} more seconds.",
+                            f"â±ï¸ Search is on cooldown. Please wait {cooldown} more seconds.",
                             delete_after=10
                         )
                     else:
                         await update_status(status_msg, MSG_SEARCHING_WEB, edit_tracker)
-                        logger.info(f"🔍 Triggering web search for: '{combined_message[:50]}...'")
+                        logger.info(f"ðŸ” Triggering web search for: '{combined_message[:50]}...'")
                         web_context = await get_web_context(combined_message, guild_id=guild_id)
                         
                         if web_context:
@@ -331,7 +346,7 @@ def setup_events(bot):
                 
                 # Truncate if too long
                 if len(final_system_prompt) > MAX_SYSTEM_PROMPT_CONTEXT:
-                    logger.warning(f"⚠️ Total system context too large ({len(final_system_prompt)}). Truncating to {MAX_SYSTEM_PROMPT_CONTEXT // 1000}k.")
+                    logger.warning(f"âš ï¸ Total system context too large ({len(final_system_prompt)}). Truncating to {MAX_SYSTEM_PROMPT_CONTEXT // 1000}k.")
                     truncated = final_system_prompt[:SYSTEM_PROMPT_TRUNCATE_TO]
                     last_paragraph = truncated.rfind('\n\n')
                     if last_paragraph > SYSTEM_PROMPT_SAFE_TRUNCATE:

@@ -6,7 +6,6 @@ Exports all settings and constants for easy importing.
 from config.settings import (
     # Discord
     DISCORD_TOKEN,
-    CHANNEL_IDS,
     
     # LMStudio
     LMSTUDIO_URL,
@@ -71,7 +70,6 @@ from config.constants import (
 __all__ = [
     # Settings
     'DISCORD_TOKEN',
-    'CHANNEL_IDS',
     'LMSTUDIO_URL',
     'MAX_HISTORY',
     'CONTEXT_MESSAGES',

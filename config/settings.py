@@ -19,10 +19,6 @@ def ensure_env_file():
 # REQUIRED: Your Discord bot token from https://discord.com/developers/applications
 DISCORD_BOT_TOKEN=your-discord-bot-token-here
 
-# REQUIRED: Comma-separated list of channel IDs where the bot should listen
-# Enable Developer Mode in Discord, right-click channels, and select "Copy ID"
-DISCORD_CHANNEL_IDS=
-
 # LMStudio API Configuration
 LMSTUDIO_URL=http://localhost:1234/v1/chat/completions
 
@@ -57,7 +53,7 @@ ALLTALK_VOICE=alloy
         with open(env_file_path, 'w', encoding='utf-8') as f:
             f.write(default_env_content)
         print(f"Created default .env file at {env_file_path}")
-        print("Please edit the .env file and add your DISCORD_BOT_TOKEN and DISCORD_CHANNEL_IDS")
+        print("Please edit the .env file and add your DISCORD_BOT_TOKEN")
         print("")
         # Reload after creating the file
         load_dotenv()
@@ -70,16 +66,6 @@ ensure_env_file()
 # ============================================================================
 
 DISCORD_TOKEN = os.getenv('DISCORD_BOT_TOKEN', 'your-discord-bot-token-here')
-
-# Parse channel IDs from comma-separated string
-CHANNEL_IDS_STR = os.getenv('DISCORD_CHANNEL_IDS', '0')
-CHANNEL_IDS = set()
-if CHANNEL_IDS_STR and CHANNEL_IDS_STR != '0':
-    try:
-        CHANNEL_IDS = set(int(cid.strip()) for cid in CHANNEL_IDS_STR.split(',') if cid.strip())
-    except ValueError:
-        print("ERROR: DISCORD_CHANNEL_IDS must be comma-separated numbers")
-        CHANNEL_IDS = set()
 
 # ============================================================================
 # LMSTUDIO API CONFIGURATION
