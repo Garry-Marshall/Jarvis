@@ -81,3 +81,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+synapse_bot.db

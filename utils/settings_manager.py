@@ -1,12 +1,11 @@
 """
 Settings Manager - Centralized guild settings management.
-Provides a clean interface for managing per-guild configuration with validation and caching.
+Provides a clean interface for managing per-guild configuration with validation.
+
+UPDATED: Now uses SQLite database instead of JSON files for better concurrency and reliability.
 """
-import json
 import logging
-import os
 from typing import Any, Dict, Optional
-from threading import Lock
 
 from config.constants import (
     DEFAULT_TEMPERATURE,
@@ -15,7 +14,7 @@ from config.constants import (
     MAX_TEMPERATURE,
     MAX_SYSTEM_PROMPT_LENGTH,
 )
-from config.settings import GUILD_SETTINGS_FILE, ENABLE_TTS, ALLTALK_VOICE
+from config.settings import ENABLE_TTS, ALLTALK_VOICE
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class SettingsManager:
     
     Provides:
     - Automatic validation of setting values
-    - Thread-safe operations
+    - Thread-safe operations (via SQLite)
     - Persistent storage
     - Type checking
     - Default value handling
@@ -82,38 +81,10 @@ class SettingsManager:
     }
     
     def __init__(self):
-        """Initialize the settings manager."""
-        self._settings: Dict[int, Dict[str, Any]] = {}
-        self._lock = Lock()
-        self._load()
-    
-    def _load(self) -> None:
-        """Load settings from persistent storage."""
-        if os.path.exists(GUILD_SETTINGS_FILE):
-            try:
-                with open(GUILD_SETTINGS_FILE, "r", encoding="utf-8") as f:
-                    raw = json.load(f)
-                    self._settings = {int(k): v for k, v in raw.items()}
-                logger.info(f"Loaded settings for {len(self._settings)} guild(s)")
-            except Exception as e:
-                logger.error(f"Failed to load guild settings: {e}")
-                self._settings = {}
-        else:
-            logger.info("Guild settings file not found. Will create on first save.")
-            self._settings = {}
-    
-    def _save(self) -> None:
-        """Save settings to persistent storage."""
-        try:
-            with open(GUILD_SETTINGS_FILE, "w", encoding="utf-8") as f:
-                json.dump(
-                    {str(k): v for k, v in self._settings.items()},
-                    f,
-                    indent=2,
-                    ensure_ascii=False
-                )
-        except Exception as e:
-            logger.error(f"Failed to save guild settings: {e}")
+        """Initialize the settings manager with database backend."""
+        from utils.database import get_database
+        self._db = get_database()
+        logger.info("SettingsManager initialized with SQLite backend")
     
     def _validate_setting(self, key: str, value: Any) -> tuple[bool, Optional[str]]:
         """
@@ -164,10 +135,7 @@ class SettingsManager:
         if guild_id is None:
             return default
         
-        with self._lock:
-            if guild_id in self._settings:
-                return self._settings[guild_id].get(key, default)
-            return default
+        return self._db.get_setting(guild_id, key, default)
     
     def set(self, guild_id: int, key: str, value: Any) -> tuple[bool, Optional[str]]:
         """
@@ -187,16 +155,14 @@ class SettingsManager:
             logger.warning(f"Invalid setting for guild {guild_id}: {error}")
             return False, error
         
-        # Set
-        with self._lock:
-            if guild_id not in self._settings:
-                self._settings[guild_id] = {}
-            
-            self._settings[guild_id][key] = value
-            self._save()
-        
-        logger.info(f"Updated guild {guild_id} setting: {key} = {value}")
-        return True, None
+        # Set in database
+        try:
+            self._db.set_setting(guild_id, key, value)
+            logger.info(f"Updated guild {guild_id} setting: {key} = {value}")
+            return True, None
+        except Exception as e:
+            logger.error(f"Failed to set setting {key} for guild {guild_id}: {e}", exc_info=True)
+            return False, str(e)
     
     def delete(self, guild_id: int, key: str) -> None:
         """
@@ -206,11 +172,7 @@ class SettingsManager:
             guild_id: Guild ID
             key: Setting key
         """
-        with self._lock:
-            if guild_id in self._settings:
-                self._settings[guild_id].pop(key, None)
-                self._save()
-        
+        self._db.delete_setting(guild_id, key)
         logger.info(f"Deleted guild {guild_id} setting: {key}")
     
     def get_all(self, guild_id: int) -> Dict[str, Any]:
@@ -223,8 +185,7 @@ class SettingsManager:
         Returns:
             Dictionary of all settings
         """
-        with self._lock:
-            return self._settings.get(guild_id, {}).copy()
+        return self._db.get_all_settings(guild_id)
     
     def clear(self, guild_id: int) -> None:
         """
@@ -233,11 +194,7 @@ class SettingsManager:
         Args:
             guild_id: Guild ID
         """
-        with self._lock:
-            if guild_id in self._settings:
-                del self._settings[guild_id]
-                self._save()
-        
+        self._db.clear_all_settings(guild_id)
         logger.info(f"Cleared all settings for guild {guild_id}")
     
     # Convenience methods for common settings
@@ -298,13 +255,13 @@ def get_settings_manager() -> SettingsManager:
 
 # Backward compatibility functions for existing code
 def load_guild_settings() -> None:
-    """Load guild settings (compatibility function)."""
+    """Load guild settings (compatibility function - now no-op)."""
     get_settings_manager()
 
 
 def save_guild_settings() -> None:
-    """Save guild settings (compatibility function)."""
-    get_settings_manager()._save()
+    """Save guild settings (compatibility function - now no-op, auto-saved to DB)."""
+    pass  # Database auto-commits
 
 
 def get_guild_setting(guild_id: Optional[int], key: str, default=None):
@@ -374,7 +331,7 @@ def clear_guild_settings(guild_id: int) -> None:
     get_settings_manager().clear(guild_id)
 
 
-# For backward compatibility, keep the old dict reference
+# For backward compatibility, keep the old dict reference (empty)
 guild_settings = {}
 
 # ============================================================================

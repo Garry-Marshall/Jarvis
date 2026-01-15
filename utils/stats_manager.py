@@ -1,33 +1,36 @@
 """
 Statistics tracking and persistence.
 Manages conversation statistics per channel/DM.
+
+UPDATED: Now uses SQLite database instead of JSON files for better reliability.
 """
-import json
 import logging
-import os
-import threading
-import time
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Optional
 
-from config.settings import STATS_FILE, MAX_HISTORY
-from config.constants import MAX_RESPONSE_TIMES, INACTIVITY_THRESHOLD_DAYS, SAVE_INTERVAL
+from config.settings import MAX_HISTORY
+from config.constants import INACTIVITY_THRESHOLD_DAYS
 
 logger = logging.getLogger(__name__)
 
-# Store conversation history per channel/DM
+# Store conversation history per channel/DM (in-memory, not persisted)
 conversation_histories: Dict[int, list] = defaultdict(list)
 
-# Track whether context has been loaded for each conversation
+# Track whether context has been loaded for each conversation (in-memory)
 context_loaded: Dict[int, bool] = defaultdict(bool)
 
-# Store statistics per channel/DM
-channel_stats: Dict[int, Dict] = {}
+# Database instance will be initialized on first use
+_db = None
 
-# Save batching to reduce disk I/O
-_last_save_time = time.time()
-_save_lock = threading.Lock()
+
+def _get_db():
+    """Lazy-load database instance."""
+    global _db
+    if _db is None:
+        from utils.database import get_database
+        _db = get_database()
+    return _db
 
 
 def create_empty_stats() -> dict:
@@ -51,157 +54,73 @@ def create_empty_stats() -> dict:
     }
 
 
-def serialize_stats(stats: dict) -> dict:
-    """
-    Convert stats dictionary to JSON-serializable format.
-    
-    Args:
-        stats: Statistics dictionary with datetime objects
-        
-    Returns:
-        Serializable dictionary
-    """
-    out = {}
-    for cid, data in stats.items():
-        out[str(cid)] = {
-            **data,
-            "start_time": data["start_time"].isoformat(),
-            "last_message_time": (
-                data["last_message_time"].isoformat()
-                if data["last_message_time"] else None
-            ),
-        }
-    return out
-
-
-def deserialize_stats(data: dict) -> dict:
-    """
-    Convert JSON data back to stats dictionary with datetime objects.
-    
-    Args:
-        data: Serialized statistics dictionary
-        
-    Returns:
-        Statistics dictionary with datetime objects
-    """
-    out = {}
-    for cid, stats in data.items():
-        out[int(cid)] = {
-            **stats,
-            "start_time": datetime.fromisoformat(stats["start_time"]),
-            "last_message_time": (
-                datetime.fromisoformat(stats["last_message_time"])
-                if stats["last_message_time"] else None
-            ),
-        }
-    return out
-
-
 def cleanup_old_conversations() -> None:
     """
     Clean up conversation data for channels/users inactive for more than INACTIVITY_THRESHOLD_DAYS.
-    Removes old entries from conversation_histories, context_loaded, and channel_stats.
+    Removes old entries from database and clears in-memory conversation histories.
     """
-    now = datetime.now()
-    threshold = timedelta(days=INACTIVITY_THRESHOLD_DAYS)
+    db = _get_db()
+    deleted = db.cleanup_old_conversations(INACTIVITY_THRESHOLD_DAYS)
     
-    # Find inactive conversations
-    inactive_ids = []
-    for conv_id, stats in channel_stats.items():
-        last_message = stats.get("last_message_time")
-        if last_message and (now - last_message) > threshold:
-            inactive_ids.append(conv_id)
-    
-    # Clean up
-    for conv_id in inactive_ids:
-        if conv_id in conversation_histories:
-            del conversation_histories[conv_id]
-        if conv_id in context_loaded:
-            del context_loaded[conv_id]
-        if conv_id in channel_stats:
-            del channel_stats[conv_id]
-    
-    if inactive_ids:
-        logger.info(f"Cleaned up {len(inactive_ids)} inactive conversations (inactive > {INACTIVITY_THRESHOLD_DAYS} days)")
-        save_stats()
+    if deleted > 0:
+        # Also clean up in-memory histories for deleted conversations
+        deleted_ids = []
+        all_conv_ids = set(db.get_all_conversation_ids())
+        
+        for conv_id in list(conversation_histories.keys()):
+            if conv_id not in all_conv_ids:
+                deleted_ids.append(conv_id)
+        
+        for conv_id in deleted_ids:
+            if conv_id in conversation_histories:
+                del conversation_histories[conv_id]
+            if conv_id in context_loaded:
+                del context_loaded[conv_id]
 
 
 def load_stats() -> None:
-    """Load statistics from file."""
-    global channel_stats
-    
-    if os.path.exists(STATS_FILE):
-        try:
-            with open(STATS_FILE, "r", encoding="utf-8") as f:
-                raw = json.load(f)
-                if isinstance(raw, dict) and raw:
-                    channel_stats = deserialize_stats(raw)
-                    logger.info(f"Successfully loaded stats for {len(channel_stats)} channels.")
-                else:
-                    # File exists but is just [] or "" or similar
-                    channel_stats = {}
-        except Exception as e:
-            logger.warning(f"Stats file was invalid ({e}). Resetting memory.")
-            channel_stats = {}
-    else:
-        logger.info("Stats file not found. A new one will be created.")
-        channel_stats = {}
-    
-    # Ensure a valid file exists on disk right now
-    save_stats()
+    """Load statistics from database (compatibility function - now no-op)."""
+    # Database is automatically initialized when needed
+    logger.info("Stats loading handled by database layer")
 
 
 def save_stats() -> None:
-    """Save statistics to file."""
-    try:
-        with open(STATS_FILE, "w", encoding="utf-8") as f:
-            json.dump(serialize_stats(channel_stats), f, indent=2)
-    except Exception as e:
-        logger.error(f"Could not write stats file: {e}")
+    """Save statistics to database (compatibility function - now no-op)."""
+    # Database auto-commits on each operation
+    pass
 
 
 def save_stats_if_needed(force: bool = False) -> None:
     """
-    Save statistics if enough time has passed since last save.
+    Save statistics if needed (compatibility function - now no-op).
     
     Args:
-        force: If True, save regardless of time interval
+        force: Ignored - database auto-commits
     """
-    global _last_save_time
-    current_time = time.time()
-    
-    with _save_lock:
-        if force or (current_time - _last_save_time > SAVE_INTERVAL):
-            save_stats()
-            _last_save_time = current_time
-            if not force:
-                logger.debug(f"Auto-saved stats (interval: {SAVE_INTERVAL}s)")
+    # Database auto-commits, no periodic saving needed
+    pass
 
 
-def get_or_create_stats(conversation_id: int) -> dict:
+def get_or_create_stats(conversation_id: int, guild_id: Optional[int] = None) -> dict:
     """
     Get stats for a conversation, creating empty stats if needed.
     
     Args:
         conversation_id: Channel or DM ID
+        guild_id: Optional guild ID for new conversations
         
     Returns:
         Statistics dictionary for this conversation
     """
-    if conversation_id not in channel_stats:
-        channel_stats[conversation_id] = create_empty_stats()
-    else:
-        # Ensure tool_usage exists for backward compatibility
-        if "tool_usage" not in channel_stats[conversation_id]:
-            channel_stats[conversation_id]["tool_usage"] = {
-                "web_search": 0,
-                "url_fetch": 0,
-                "image_analysis": 0,
-                "pdf_read": 0,
-                "tts_voice": 0,
-            }
+    db = _get_db()
+    stats = db.get_conversation(conversation_id)
     
-    return channel_stats[conversation_id]
+    if not stats:
+        # Create new conversation
+        db.create_conversation(conversation_id, guild_id)
+        stats = db.get_conversation(conversation_id)
+    
+    return stats
 
 
 def update_stats(
@@ -225,44 +144,16 @@ def update_stats(
         failed: Whether the request failed
         tool_used: Name of tool used (web_search, url_fetch, image_analysis, pdf_read, tts_voice)
     """
-    stats = get_or_create_stats(conversation_id)
-    
-    if failed:
-        stats["failed_requests"] += 1
-    else:
-        stats["total_messages"] += 1
-        stats["prompt_tokens_estimate"] += prompt_tokens
-        stats["response_tokens_raw"] += response_tokens_raw
-        stats["response_tokens_cleaned"] += response_tokens_cleaned
-        stats["total_tokens_estimate"] = (
-            stats["prompt_tokens_estimate"] + stats["response_tokens_cleaned"]
-        )
-        
-        if response_time is not None:
-            stats["response_times"].append(response_time)
-            # Keep only last MAX_RESPONSE_TIMES entries to prevent unbounded growth
-            if len(stats["response_times"]) > MAX_RESPONSE_TIMES:
-                stats["response_times"] = stats["response_times"][-MAX_RESPONSE_TIMES:]
-        
-        stats["last_message_time"] = datetime.now()
-    
-    # Track tool usage regardless of success/failure
-    if tool_used:
-        # Ensure tool_usage dict exists
-        if "tool_usage" not in stats:
-            stats["tool_usage"] = {
-                "web_search": 0,
-                "url_fetch": 0,
-                "image_analysis": 0,
-                "pdf_read": 0,
-                "tts_voice": 0,
-            }
-        
-        if tool_used in stats["tool_usage"]:
-            stats["tool_usage"][tool_used] += 1
-    
-    # Save periodically instead of every time
-    save_stats_if_needed()
+    db = _get_db()
+    db.update_conversation(
+        conversation_id=conversation_id,
+        prompt_tokens=prompt_tokens,
+        response_tokens_raw=response_tokens_raw,
+        response_tokens_cleaned=response_tokens_cleaned,
+        response_time=response_time,
+        failed=failed,
+        tool_used=tool_used
+    )
 
 
 def reset_stats(conversation_id: int) -> None:
@@ -272,8 +163,13 @@ def reset_stats(conversation_id: int) -> None:
     Args:
         conversation_id: Channel or DM ID
     """
-    channel_stats[conversation_id] = create_empty_stats()
-    save_stats()
+    db = _get_db()
+    
+    # Delete and recreate
+    with db._get_cursor() as cursor:
+        cursor.execute("DELETE FROM conversations WHERE conversation_id = ?", (conversation_id,))
+    
+    db.create_conversation(conversation_id)
     logger.info(f"Reset stats for conversation {conversation_id}")
 
 
@@ -314,13 +210,15 @@ def get_stats_summary(conversation_id: int) -> str:
         f"🔊 Voice Replies: {tool_usage.get('tts_voice', 0)}"
     )
     
+    total_tokens = stats['prompt_tokens_estimate'] + stats['response_tokens_cleaned']
+    
     return f"""📈 **Conversation Statistics**
 
 **Total Messages:** {stats['total_messages']}
 **Prompt Tokens (est):** {stats['prompt_tokens_estimate']:,}
 **Response Tokens (raw):** {stats['response_tokens_raw']:,}
 **Response Tokens (cleaned):** {stats['response_tokens_cleaned']:,}
-**Total Tokens (est):** {(stats['prompt_tokens_estimate'] + stats['response_tokens_cleaned']):,}
+**Total Tokens (est):** {total_tokens:,}
 **Failed Requests:** {stats.get('failed_requests', 0)}
 
 **Session Duration:** {hours}h {minutes}m {seconds}s
@@ -403,5 +301,46 @@ def set_context_loaded(conversation_id: int, loaded: bool = True) -> None:
     context_loaded[conversation_id] = loaded
 
 
-# Initialize stats on module import
-load_stats()
+# Backward compatibility - expose a dict-like interface for code that accesses channel_stats directly
+class _StatsProxy:
+    """Proxy object that provides dict-like access to database stats."""
+    
+    def __getitem__(self, conversation_id: int) -> dict:
+        """Get stats for a conversation."""
+        return get_or_create_stats(conversation_id)
+    
+    def __setitem__(self, conversation_id: int, value: dict) -> None:
+        """Not supported - use update_stats() instead."""
+        raise NotImplementedError("Direct assignment not supported. Use update_stats() instead.")
+    
+    def get(self, conversation_id: int, default=None) -> dict:
+        """Get stats with default."""
+        try:
+            return get_or_create_stats(conversation_id)
+        except Exception:
+            return default if default is not None else create_empty_stats()
+    
+    def values(self):
+        """Get all stats (for iteration)."""
+        db = _get_db()
+        for conv_id in db.get_all_conversation_ids():
+            yield db.get_conversation(conv_id)
+    
+    def items(self):
+        """Get all (id, stats) pairs."""
+        db = _get_db()
+        for conv_id in db.get_all_conversation_ids():
+            yield conv_id, db.get_conversation(conv_id)
+    
+    def keys(self):
+        """Get all conversation IDs."""
+        db = _get_db()
+        return db.get_all_conversation_ids()
+
+
+# Create proxy instance for backward compatibility
+channel_stats = _StatsProxy()
+
+
+# Initialize on module import (database will auto-migrate if needed)
+_db = _get_db()
