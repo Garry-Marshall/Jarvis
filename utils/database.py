@@ -7,14 +7,13 @@ import json
 import logging
 import os
 from typing import Any, Optional, Dict, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from contextlib import contextmanager
 from threading import Lock
 
 from config.settings import DB_FILE
 
 logger = logging.getLogger(__name__)
-
 
 # Thread-safe lock for database operations
 _db_lock = Lock()
@@ -360,8 +359,7 @@ class Database:
         Returns:
             Number of conversations deleted
         """
-        cutoff = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        cutoff = cutoff.replace(day=cutoff.day - days)
+        cutoff = datetime.now() - timedelta(days=days)
         
         with self._get_cursor() as cursor:
             cursor.execute("""
