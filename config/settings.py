@@ -52,12 +52,12 @@ MAX_PDF_SIZE=10
 # Reasoning Model Settings
 HIDE_THINKING=true
 
-# Voice/TTS Settings
-ENABLE_TTS=true
+# Voice/TTS Settings (optional)
+ENABLE_TTS=false
 ALLTALK_URL=http://127.0.0.1:7851
 ALLTALK_VOICE=alloy
 
-# ComfyUI Settings
+# ComfyUI Settings (optional)
 ENABLE_COMFYUI=false
 COMFYUI_URL=127.0.0.1:8188
 COMFYUI_WORKFLOW='workflow_flux_api.json'
