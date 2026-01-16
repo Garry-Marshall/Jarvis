@@ -26,6 +26,9 @@ pypdf>=6.6.0
 # System Monitoring
 psutil>=5.9.0
 
+# Token counting for LLM interactions
+tiktoken>=0.5.1
+
 # Optional
 # Uncomment if needed
 # lxml>=6.0.2

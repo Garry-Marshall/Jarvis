@@ -3,21 +3,148 @@ Text processing utilities.
 Handles token estimation, thinking tag removal, and text cleaning.
 """
 import re
+import logging
+from typing import Union, List, Dict, Any
 from config.settings import HIDE_THINKING
 from config.constants import CHARS_PER_TOKEN, DISCORD_MESSAGE_LIMIT
 
+try:
+    import tiktoken
+    TIKTOKEN_AVAILABLE = True
+except ImportError:
+    TIKTOKEN_AVAILABLE = False
 
-def estimate_tokens(text: str) -> int:
+logger = logging.getLogger(__name__)
+
+# Cache for tiktoken encoding
+_encoding_cache = None
+
+
+def _get_encoding():
     """
-    Rough estimation of tokens (approximately 4 characters per token).
-    
+    Get or create cached tiktoken encoding instance.
+    Uses cl100k_base encoding (GPT-4, GPT-3.5-turbo compatible).
+
+    Returns:
+        tiktoken.Encoding instance or None if tiktoken unavailable
+    """
+    global _encoding_cache
+
+    if not TIKTOKEN_AVAILABLE:
+        return None
+
+    if _encoding_cache is None:
+        try:
+            # cl100k_base is used by GPT-4 and GPT-3.5-turbo
+            # This is a good default for most modern LLMs
+            _encoding_cache = tiktoken.get_encoding("cl100k_base")
+            logger.info("Initialized tiktoken with cl100k_base encoding")
+        except Exception as e:
+            logger.warning(f"Failed to initialize tiktoken: {e}. Falling back to character-based estimation.")
+            return None
+
+    return _encoding_cache
+
+
+def estimate_tokens(text: Union[str, List, Dict]) -> int:
+    """
+    Accurate token counting using tiktoken library with fallback.
+
+    This function now uses tiktoken for accurate token counting, which is
+    important for:
+    - Statistics tracking (knowing actual token usage)
+    - Context window management (avoiding overflow)
+    - Cost estimation (for paid APIs)
+
     Args:
-        text: Input text string
-        
+        text: Input text string, or message structure (list/dict)
+
     Returns:
         Estimated number of tokens
     """
+    # Convert complex structures to string
+    if isinstance(text, (list, dict)):
+        text = str(text)
+
+    if not isinstance(text, str):
+        logger.warning(f"estimate_tokens received unexpected type: {type(text)}")
+        return 0
+
+    # Try tiktoken first for accurate counting
+    encoding = _get_encoding()
+    if encoding is not None:
+        try:
+            return len(encoding.encode(text))
+        except Exception as e:
+            logger.debug(f"tiktoken encoding failed: {e}. Using fallback method.")
+
+    # Fallback to character-based estimation
     return len(text) // CHARS_PER_TOKEN
+
+
+def count_message_tokens(messages: List[Dict[str, Any]]) -> int:
+    """
+    Count tokens in a list of chat messages with proper formatting overhead.
+
+    This accounts for the additional tokens used by the chat format structure
+    (role labels, delimiters, etc.) which are typically 3-4 tokens per message.
+
+    Args:
+        messages: List of message dictionaries with 'role' and 'content' keys
+
+    Returns:
+        Total token count including format overhead
+    """
+    encoding = _get_encoding()
+
+    if encoding is None:
+        # Fallback: simple character-based estimation
+        total_chars = sum(len(str(msg.get('content', ''))) for msg in messages)
+        # Add overhead: ~3 tokens per message for role/format
+        return (total_chars // CHARS_PER_TOKEN) + (len(messages) * 3)
+
+    total_tokens = 0
+
+    try:
+        for message in messages:
+            # Count tokens in content
+            content = message.get('content', '')
+
+            # Handle complex content (images, etc.)
+            if isinstance(content, list):
+                for item in content:
+                    if isinstance(item, dict):
+                        if item.get('type') == 'text':
+                            total_tokens += len(encoding.encode(item.get('text', '')))
+                        elif item.get('type') == 'image_url':
+                            # Images use a fixed token count (varies by detail level)
+                            # High detail: ~765 tokens, Low detail: ~85 tokens
+                            # Default to high detail estimate
+                            total_tokens += 765
+                    elif isinstance(item, str):
+                        total_tokens += len(encoding.encode(item))
+            elif isinstance(content, str):
+                total_tokens += len(encoding.encode(content))
+
+            # Count tokens in role (usually 1-2 tokens)
+            role = message.get('role', '')
+            if role:
+                total_tokens += len(encoding.encode(role))
+
+            # Add overhead for message formatting (delimiters, structure)
+            # OpenAI format adds ~3-4 tokens per message
+            total_tokens += 3
+
+        # Add conversation overhead
+        # Each conversation has a fixed overhead of ~3 tokens
+        total_tokens += 3
+
+    except Exception as e:
+        logger.warning(f"Error counting message tokens: {e}. Using fallback.")
+        total_chars = sum(len(str(msg.get('content', ''))) for msg in messages)
+        return (total_chars // CHARS_PER_TOKEN) + (len(messages) * 3)
+
+    return total_tokens
 
 
 def remove_thinking_tags(text: str) -> str:
