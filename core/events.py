@@ -220,17 +220,7 @@ def setup_events(bot):
             # Get guild_id for settings (None for DMs)
             guild_id = message.guild.id if not is_dm else None
 
-            # DIAGNOSTIC: Log with regular logger to verify it's working
-            logger.info(f"Processing message from {message.author.display_name} | guild_id={guild_id} | conversation_id={conversation_id}")
-
-            # Check debug settings and log diagnostic
-            from utils.settings_manager import get_settings_manager
-            settings_mgr = get_settings_manager()
-            debug_enabled = settings_mgr.is_debug_enabled(guild_id) if guild_id else False
-            debug_level = settings_mgr.get_debug_level(guild_id) if guild_id else "info"
-
-            logger.info(f"Debug settings: enabled={debug_enabled}, level={debug_level}")
-
+            # Log message processing with guild debug system
             guild_debug_log(guild_id, "info", f"Processing message from {message.author.display_name} in conversation {conversation_id}")
             guild_debug_log(guild_id, "debug", f"Message content: '{message.content[:200]}{'...' if len(message.content) > 200 else ''}'")
 
@@ -353,13 +343,9 @@ def setup_events(bot):
                     response_time=response_time
                 )
 
-                logger.info(
-                    "Response tokens | convo=%s | raw=%d | cleaned=%d | removed=%d | time=%.2fs",
-                    conversation_id,
-                    raw_token_count,
-                    cleaned_token_count,
-                    raw_token_count - cleaned_token_count,
-                    response_time
+                guild_debug_log(
+                    guild_id, "info",
+                    f"Response tokens | convo={conversation_id} | raw={raw_token_count} | cleaned={cleaned_token_count} | removed={raw_token_count - cleaned_token_count} | time={response_time:.2f}s"
                 )
 
                 # Send the final response

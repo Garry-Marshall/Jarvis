@@ -113,7 +113,7 @@ class MessageProcessor:
                 add_message_to_history(conversation_id, ctx_msg["role"], ctx_msg["content"])
 
             set_context_loaded(conversation_id, True)
-            logger.info(f"Loaded {len(recent_context)} context messages")
+            guild_debug_log(guild_id, "info", f"Loaded {len(recent_context)} context messages")
 
     @staticmethod
     async def fetch_web_and_url_context(
@@ -152,7 +152,7 @@ class MessageProcessor:
                     return "", ""
                 else:
                     await update_status(status_msg, MSG_SEARCHING_WEB, edit_tracker)
-                    logger.info(f"🔎 Triggering web search for: '{combined_message[:50]}...'")
+                    guild_debug_log(guild_id, "info", f"🔎 Triggering web search for: '{combined_message[:50]}...'")
                     web_context = await get_web_context(combined_message, guild_id=guild_id)
 
                     if web_context:
@@ -374,7 +374,7 @@ class MessageProcessor:
                             logger.error(f"Error scheduling TTS cleanup: {e}")
 
                     voice_client.play(discord.FFmpegPCMAudio(temp_audio), after=cleanup)
-                    logger.info(f"Playing TTS audio for guild {guild_id} with voice {guild_voice}")
+                    guild_debug_log(guild_id, "info", f"Playing TTS audio for guild {guild_id} with voice {guild_voice}")
             except Exception as e:
                 logger.error(f"Error playing TTS: {e}", exc_info=True)
 

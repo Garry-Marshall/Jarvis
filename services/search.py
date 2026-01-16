@@ -106,7 +106,7 @@ async def get_web_context(
         # Try fallback to DuckDuckGo only if auto fails
         if backend == "auto":
             try:
-                logger.info("Retrying search with DuckDuckGo backend only...")
+                guild_debug_log(guild_id, "info", "Retrying search with DuckDuckGo backend only...")
                 ddgs = DDGS(timeout=10)
                 results = ddgs.text(
                     query=query,
@@ -188,4 +188,4 @@ def update_search_cooldown(guild_id: Optional[int]) -> None:
     """
     if guild_id:
         search_cooldowns[guild_id] = time.time()
-        logger.info(f"Search cooldown updated for guild {guild_id}")
+        guild_debug_log(guild_id, "info", f"Search cooldown updated for guild {guild_id}")

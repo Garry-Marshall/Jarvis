@@ -47,6 +47,11 @@ def setup_logging():
     logging.getLogger('discord.gateway').setLevel(logging.WARNING)
     logging.getLogger('discord.client').setLevel(logging.INFO)
 
+    # Reduce verbosity of HTTP and web scraping libraries
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+    logging.getLogger('trafilatura').setLevel(logging.WARNING)
+
     
     logger = logging.getLogger(__name__)
     logger.info(f"Logging initialized. Log file: {log_filename}")

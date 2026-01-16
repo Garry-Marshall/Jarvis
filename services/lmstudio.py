@@ -182,12 +182,9 @@ async def stream_completion(
         "stream": True
     }
 
-    logger.info(
-        "LMStudio request | model=%s | messages=%d | temp=%.2f | max_tokens=%s",
-        model,
-        len(messages),
-        temperature,
-        max_tokens
+    guild_debug_log(
+        guild_id, "info",
+        f"LMStudio request | model={model} | messages={len(messages)} | temp={temperature:.2f} | max_tokens={max_tokens}"
     )
 
     guild_debug_log(guild_id, "debug", f"LMStudio API payload: {len(messages)} messages, model={model}")

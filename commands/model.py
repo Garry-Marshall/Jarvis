@@ -12,6 +12,7 @@ import logging
 from services.lmstudio import fetch_available_models
 from config.constants import DEFAULT_MODEL, DISCORD_SELECT_MAX_OPTIONS, MSG_NO_MODELS_AVAILABLE
 from utils.permissions import check_admin_permission
+from utils.logging_config import guild_debug_log
 
 logger = logging.getLogger(__name__)
 
@@ -131,15 +132,14 @@ def get_selected_model(guild_id: Optional[int]) -> str:
     if guild_id is None:
         # For DMs, use default model
         model = default_model
-        logger.debug(f"Using default model for DM: {model}")
         return model
-    
+
     model = selected_models.get(guild_id, default_model)
     if guild_id not in selected_models:
-        logger.debug(f"No model selected for guild {guild_id}, using default: {model}")
+        guild_debug_log(guild_id, "debug", f"No model selected for guild {guild_id}, using default: {model}")
     else:
-        logger.debug(f"Using selected model for guild {guild_id}: {model}")
-    
+        guild_debug_log(guild_id, "debug", f"Using selected model for guild {guild_id}: {model}")
+
     return model
 
 
