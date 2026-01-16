@@ -69,7 +69,8 @@ def setup_help_command(tree: app_commands.CommandTree):
 • Settings are saved per server and persist across restarts
 • Temperature and max_tokens affect response style and length
 • The bot automatically searches the web when needed
-• Supported file types: images (PNG, JPG, GIF, WebP), PDFs, and text files  """
+• Supported file types: images (PNG, JPG, GIF, WebP), PDFs, and text files
+"""
 
         # Add ComfyUI note if enabled (both globally and for this guild)
         if comfyui_enabled:

@@ -22,6 +22,10 @@ DISCORD_BOT_TOKEN=your-discord-bot-token-here
 # REQUIRED: database name
 DB_FILE=synapse_bot.db
 
+# Logging and Debug Settings
+DEBUG=true
+DEBUG_LEVEL=info # options: info, debug
+
 # LMStudio API Configuration
 LMSTUDIO_URL=http://localhost:1234/v1/chat/completions
 
@@ -48,12 +52,12 @@ MAX_PDF_SIZE=10
 # Reasoning Model Settings
 HIDE_THINKING=true
 
-# Voice/TTS Settings (optional)
-ENABLE_TTS=false
+# Voice/TTS Settings
+ENABLE_TTS=true
 ALLTALK_URL=http://127.0.0.1:7851
 ALLTALK_VOICE=alloy
 
-# ComfyUI Settings (optional)
+# ComfyUI Settings
 ENABLE_COMFYUI=false
 COMFYUI_URL=127.0.0.1:8188
 COMFYUI_WORKFLOW='workflow_flux_api.json'
@@ -159,3 +163,10 @@ COMFYUI_WORKFLOW = os.getenv('COMFYUI_WORKFLOW', 'workflow_flux_api.json')
 COMFYUI_PROMPT_NODES = [str(x.strip()) for x in os.getenv('COMFYUI_PROMPT_NODES', '6').split(',') if x.strip()]
 COMFYUI_RAND_SEED_NODES = [str(x.strip()) for x in os.getenv('COMFYUI_RAND_SEED_NODES', '36').split(',') if x.strip()]
 COMFYUI_TRIGGERS = [x.strip().lower() for x in os.getenv('COMFYUI_TRIGGERS', 'imagine,generate').split(',') if x.strip()]
+
+# ============================================================================
+# LOGGING/DEBUG SETTINGS
+# ============================================================================
+
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+DEBUG_LEVEL = os.getenv('DEBUG_LEVEL', 'info').lower()  # 'info' or 'debug'

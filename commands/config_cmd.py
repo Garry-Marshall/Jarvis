@@ -13,12 +13,9 @@ from utils.settings_manager import (
     delete_guild_setting,
     get_guild_temperature,
     get_guild_max_tokens,
-    is_debug_enabled,
-    get_debug_level,
     is_search_enabled,
-    is_comfyui_enabled_for_guild
-)
-from utils.stats_manager import get_conversation_history, clear_conversation_history, reset_guild_stats
+    )
+from utils.stats_manager import get_conversation_history, clear_conversation_history
 from utils.permissions import check_admin_permission, require_guild_context
 from config.settings import ENABLE_COMFYUI
 
@@ -150,40 +147,6 @@ class MaxTokensModal(discord.ui.Modal, title="Max Tokens Configuration"):
             )
 
 
-class DebugLevelModal(discord.ui.Modal, title="Debug Level Configuration"):
-    """Modal for configuring debug log level."""
-    
-    debug_level = discord.ui.TextInput(
-        label="Debug Level (info or debug)",
-        style=discord.TextStyle.short,
-        placeholder="info",
-        required=True,
-        max_length=5
-    )
-    
-    def __init__(self, guild_id: int, current_level: str = "info"):
-        super().__init__()
-        self.guild_id = guild_id
-        self.debug_level.default = current_level
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        level = self.debug_level.value.lower().strip()
-        
-        if level not in {"info", "debug"}:
-            await interaction.response.send_message(
-                "❌ Debug level must be either 'info' or 'debug'.",
-                ephemeral=True
-            )
-            return
-        
-        set_guild_setting(self.guild_id, "debug_level", level)
-        await interaction.response.send_message(
-            f"✅ Debug log level set to **{level.upper()}**.",
-            ephemeral=True
-        )
-        logger.info(f"Debug log level set to {level} for guild {self.guild_id}")
-
-
 class ConfigView(discord.ui.View):
     """Interactive view for bot configuration."""
     
@@ -194,11 +157,6 @@ class ConfigView(discord.ui.View):
     
     def update_toggle_buttons(self):
         """Update button states based on current settings."""
-        # Update debug button
-        debug_enabled = is_debug_enabled(self.guild_id)
-        self.toggle_debug.label = f"Debug: {'ON' if debug_enabled else 'OFF'}"
-        self.toggle_debug.style = discord.ButtonStyle.success if debug_enabled else discord.ButtonStyle.secondary
-
         # Update search button
         search_enabled = is_search_enabled(self.guild_id)
         self.toggle_search.label = f"Web Search: {'ON' if search_enabled else 'OFF'}"
@@ -226,23 +184,21 @@ class ConfigView(discord.ui.View):
         system_prompt = get_guild_setting(self.guild_id, "system_prompt")
         temperature = get_guild_temperature(self.guild_id)
         max_tokens = get_guild_max_tokens(self.guild_id)
-        debug_enabled = is_debug_enabled(self.guild_id)
-        debug_level = get_debug_level(self.guild_id)
         search_enabled = is_search_enabled(self.guild_id)
-        
+
         prompt_display = (
             "Default"
             if not system_prompt
             else f"Custom ({len(system_prompt)} chars)"
         )
         max_tokens_display = "unlimited" if max_tokens == -1 else str(max_tokens)
-        
+
         embed = discord.Embed(
             title="⚙️ Bot Configuration",
             description="Click the buttons below to configure settings",
             color=discord.Color.blue()
         )
-        
+
         embed.add_field(
             name="🧠 System Prompt",
             value=prompt_display,
@@ -266,11 +222,6 @@ class ConfigView(discord.ui.View):
         embed.add_field(
             name="🔊 Text-to-Speech",
             value="Enabled" if get_guild_setting(self.guild_id, "tts_enabled", True) else "Disabled",
-            inline=True
-        )
-        embed.add_field(
-            name="🐛 Debug Mode",
-            value=f"{'ON' if debug_enabled else 'OFF'} (level: {debug_level.upper()})",
             inline=True
         )
 
@@ -315,40 +266,11 @@ class ConfigView(discord.ui.View):
         if not has_permission:
             await interaction.response.send_message(error_msg, ephemeral=True)
             return
-        
+
         current = get_guild_max_tokens(self.guild_id)
         modal = MaxTokensModal(self.guild_id, current)
         await interaction.response.send_modal(modal)
-    
-    @discord.ui.button(label="Debug: OFF", style=discord.ButtonStyle.secondary, emoji="🐛", row=1)
-    async def toggle_debug(self, interaction: discord.Interaction, button: discord.ui.Button):
-        has_permission, error_msg = check_admin_permission(interaction)
-        if not has_permission:
-            await interaction.response.send_message(error_msg, ephemeral=True)
-            return
-        
-        current = is_debug_enabled(self.guild_id)
-        new_state = not current
-        
-        set_guild_setting(self.guild_id, "debug", new_state)
-        self.update_toggle_buttons()
-        
-        embed = self.create_embed()
-        await interaction.response.edit_message(embed=embed, view=self)
-        
-        logger.info(f"Debug logging {'enabled' if new_state else 'disabled'} for guild {self.guild_id}")
-    
-    @discord.ui.button(label="Set Debug Level", style=discord.ButtonStyle.secondary, emoji="📝", row=1)
-    async def set_debug_level(self, interaction: discord.Interaction, button: discord.ui.Button):
-        has_permission, error_msg = check_admin_permission(interaction)
-        if not has_permission:
-            await interaction.response.send_message(error_msg, ephemeral=True)
-            return
-        
-        current = get_debug_level(self.guild_id)
-        modal = DebugLevelModal(self.guild_id, current)
-        await interaction.response.send_modal(modal)
-    
+
     @discord.ui.button(label="Web Search: ON", style=discord.ButtonStyle.success, emoji="🔍", row=1)
     async def toggle_search(self, interaction: discord.Interaction, button: discord.ui.Button):
         has_permission, error_msg = check_admin_permission(interaction)
@@ -474,13 +396,11 @@ class ConfigView(discord.ui.View):
             await interaction.response.send_message(error_msg, ephemeral=True)
             return
 
-        # Clear all custom settings (including newly added ones)
+        # Clear all custom settings
         settings_to_clear = [
             "system_prompt",
             "temperature",
             "max_tokens",
-            "debug",
-            "debug_level",
             "search_enabled",
             "tts_enabled",
             "selected_voice",
