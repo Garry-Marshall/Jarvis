@@ -56,6 +56,10 @@ ALLTALK_VOICE=alloy
 # ComfyUI Settings
 ENABLE_COMFYUI=false
 COMFYUI_URL=127.0.0.1:8188
+COMFYUI_WORKFLOW='workflow_flux_api.json'
+COMFYUI_PROMPT_NODES=6
+COMFYUI_RAND_SEED_NODES=36
+COMFYUI_TRIGGERS=imagine,generate
 """
         with open(env_file_path, 'w', encoding='utf-8') as f:
             f.write(default_env_content)
@@ -151,7 +155,7 @@ SEARCH_COOLDOWN = 10  # seconds between searches per guild
 
 ENABLE_COMFYUI = os.getenv('ENABLE_COMFYUI', 'false').lower() == 'true'
 COMFYUI_URL = os.getenv('COMFYUI_URL', '127.0.0.1:8188')
-COMFYUI_WORKFLOW = os.getenv('COMFYUI_WORKFLOW', 'comfyUI-workflows/workflow_flux_api.json')
+COMFYUI_WORKFLOW = os.getenv('COMFYUI_WORKFLOW', 'workflow_flux_api.json')
 COMFYUI_PROMPT_NODES = [str(x.strip()) for x in os.getenv('COMFYUI_PROMPT_NODES', '6').split(',') if x.strip()]
 COMFYUI_RAND_SEED_NODES = [str(x.strip()) for x in os.getenv('COMFYUI_RAND_SEED_NODES', '36').split(',') if x.strip()]
 COMFYUI_TRIGGERS = [x.strip().lower() for x in os.getenv('COMFYUI_TRIGGERS', 'imagine,generate').split(',') if x.strip()]

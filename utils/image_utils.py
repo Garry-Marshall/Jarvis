@@ -87,15 +87,11 @@ class ImageGenerator:
             await self.ws.close()
 
 async def generate_flux_image(prompt: str,interaction,channel_id):
-    with open(COMFYUI_WORKFLOW, 'r') as file:
+    with open('comfyUI-workflows/' + COMFYUI_WORKFLOW, 'r') as file:
         workflow = json.load(file)
       
     generator = ImageGenerator()
     await generator.connect()
-
-    #prompt_nodes = config.get('LOCAL_TEXT2IMG', 'PROMPT_NODES').split(',')
-    #neg_prompt_nodes = config.get('LOCAL_TEXT2IMG', 'NEG_PROMPT_NODES_SD3').split(',')
-    #rand_seed_nodes = config.get('LOCAL_TEXT2IMG', 'RAND_SEED_NODES_FLUX').split(',') 
 
     # Modify the prompt dictionary
     if(prompt != None and COMFYUI_PROMPT_NODES[0] != ''):
