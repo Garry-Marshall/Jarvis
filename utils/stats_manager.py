@@ -231,12 +231,14 @@ def get_stats_summary(conversation_id: int) -> str:
 def clear_conversation_history(conversation_id: int) -> None:
     """
     Clear conversation history for a channel/DM.
-    
+
     Args:
         conversation_id: Channel or DM ID
     """
     conversation_histories[conversation_id].clear()
-    context_loaded[conversation_id] = False
+    # Set context_loaded to True to prevent automatic reloading of context messages
+    # This ensures the bot starts with a truly empty history after user explicitly clears it
+    context_loaded[conversation_id] = True
     logger.info(f"Cleared conversation history for {conversation_id}")
 
 
