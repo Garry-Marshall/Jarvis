@@ -149,25 +149,35 @@ discord_bot/
    ```
 
 4. **Configure Bot**
-   
+
    The `.env` file will be created automatically on first run. Edit it to add your Discord bot token:
-   
+
    ```env
    # REQUIRED: Your Discord bot token
    DISCORD_BOT_TOKEN=your-discord-bot-token-here
-   
+
    # Database file (auto-created)
    DB_FILE=synapse_bot.db
-   
+
+    # Logging and Debug Settings
+    DEBUG=true
+    DEBUG_LEVEL=info # options: info, debug
+
+    # Permission system (optional but recommended)
+    # Bot owner user IDs (comma-separated Discord user IDs)
+    BOT_OWNER_IDS=123456789012345678,987654321098765432
+    # Default bot admin role name
+    # BOT_ADMIN_ROLE_NAME=Bot Admin
+
    # LMStudio API Configuration
    LMSTUDIO_URL=http://localhost:1234/v1/chat/completions
-   
+
    # Bot behavior
    MAX_HISTORY_MESSAGES=10
    CONTEXT_MESSAGES=5
    IGNORE_BOTS=true
    ALLOW_DMS=true
-   
+
    # File processing
    ALLOW_IMAGES=true
    MAX_IMAGE_SIZE=5
@@ -175,10 +185,10 @@ discord_bot/
    MAX_TEXT_FILE_SIZE=2
    ALLOW_PDF=true
    MAX_PDF_SIZE=10
-   
+
    # Model settings
    HIDE_THINKING=true
-   
+
    # TTS settings (optional)
    ENABLE_TTS=false
    ALLTALK_URL=http://127.0.0.1:7851
@@ -192,6 +202,24 @@ discord_bot/
    COMFYUI_RAND_SEED_NODES=36
    COMFYUI_TRIGGERS=imagine,generate
    ```
+
+   **Permission System Setup:**
+
+   The bot includes a three-tier permission system for better security:
+
+   1. **Bot Owners** (highest) - Full access to all commands
+      - Set your Discord user ID(s) in `BOT_OWNER_IDS`
+      - To find your Discord user ID: Enable Developer Mode (User Settings → Advanced → Developer Mode), then right-click your username and select "Copy User ID"
+      - Multiple owners: `BOT_OWNER_IDS=123456789,987654321`
+
+   2. **Bot Admin Role** (medium) - Server-specific bot administration
+      - Create a role named "Bot Admin" (or customize with `BOT_ADMIN_ROLE_NAME`)
+      - Users with this role can use `/config` and other admin commands
+      - Separates bot management from full Discord server admin
+
+   3. **Discord Administrator** (basic) - Falls back to Discord's admin permission
+      - Users with Discord's Administrator permission can use admin commands
+      - Least privileged of the admin tiers
 
 5. **Run the Bot**
    ```bash
