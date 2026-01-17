@@ -4,8 +4,10 @@ Handles /config command for server settings using interactive modals.
 """
 import discord
 from discord import app_commands
-from typing import Optional
+from typing import Optional, Tuple, Dict, List
 import logging
+import re
+from datetime import datetime, timedelta
 
 from utils.settings_manager import (
     get_guild_setting,
@@ -18,8 +20,69 @@ from utils.settings_manager import (
 from utils.stats_manager import get_conversation_history, clear_conversation_history
 from utils.permissions import check_admin_permission, require_guild_context
 from config.settings import ENABLE_COMFYUI
+from config.constants import MAX_PROMPT_CHANGES_PER_HOUR
 
 logger = logging.getLogger(__name__)
+
+# Suspicious patterns that could indicate prompt injection
+PROMPT_INJECTION_PATTERNS = [
+    r'ignore\s+(previous|all|prior)\s+instructions',
+    r'disregard\s+(previous|all|prior)',
+    r'forget\s+(everything|all|previous)',
+    r'new\s+instructions',
+    r'system\s+override',
+    r'admin\s+mode',
+    r'developer\s+mode',
+    r'jailbreak',
+    r'\\n\\n---\\n\\n',  # Common delimiter in injection attempts
+    r'<\s*system\s*>',  # XML-style system tags
+    r'SYSTEM:',  # System prompt markers
+    r'you\s+are\s+now',  # Role redefinition attempts
+]
+
+# Track prompt changes per guild for rate limiting
+prompt_change_timestamps: Dict[int, List[datetime]] = {}
+
+
+def validate_system_prompt(prompt: str, guild_id: int) -> Tuple[bool, str]:
+    """
+    Validate system prompt for injection attempts and rate limiting.
+
+    Args:
+        prompt: The system prompt to validate
+        guild_id: Guild ID for rate limiting
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    # Check for injection patterns
+    for pattern in PROMPT_INJECTION_PATTERNS:
+        if re.search(pattern, prompt, re.IGNORECASE):
+            logger.warning(
+                f"Potential prompt injection detected in guild {guild_id}: "
+                f"matched pattern '{pattern}'"
+            )
+            return False, "System prompt contains suspicious patterns. Please rephrase."
+
+    # Rate limiting
+    current_time = datetime.now()
+    if guild_id not in prompt_change_timestamps:
+        prompt_change_timestamps[guild_id] = []
+
+    # Clean up old timestamps (older than 1 hour)
+    prompt_change_timestamps[guild_id] = [
+        ts for ts in prompt_change_timestamps[guild_id]
+        if current_time - ts < timedelta(hours=1)
+    ]
+
+    # Check rate limit
+    if len(prompt_change_timestamps[guild_id]) >= MAX_PROMPT_CHANGES_PER_HOUR:
+        return False, f"Too many prompt changes ({MAX_PROMPT_CHANGES_PER_HOUR}/hour limit). Please wait before modifying again."
+
+    # Record this change
+    prompt_change_timestamps[guild_id].append(current_time)
+
+    return True, ""
 
 
 class SystemPromptModal(discord.ui.Modal, title="System Prompt Configuration"):
@@ -41,7 +104,7 @@ class SystemPromptModal(discord.ui.Modal, title="System Prompt Configuration"):
     
     async def on_submit(self, interaction: discord.Interaction):
         prompt_value = self.system_prompt.value.strip()
-        
+
         # Validate length
         if len(prompt_value) > 10000:
             await interaction.response.send_message(
@@ -49,21 +112,38 @@ class SystemPromptModal(discord.ui.Modal, title="System Prompt Configuration"):
                 ephemeral=True
             )
             return
-        
+
+        # Validate for injection patterns and rate limits
+        if prompt_value:
+            is_valid, error_msg = validate_system_prompt(prompt_value, self.guild_id)
+            if not is_valid:
+                await interaction.response.send_message(
+                    f"❌ {error_msg}",
+                    ephemeral=True
+                )
+                return
+
         if prompt_value:
             set_guild_setting(self.guild_id, "system_prompt", prompt_value)
+            # Log who made the change for audit trail
+            logger.info(
+                f"System prompt updated for guild {self.guild_id} "
+                f"by user {interaction.user.id} ({interaction.user.name})"
+            )
             await interaction.response.send_message(
                 f"✅ System prompt updated ({len(prompt_value)} characters).",
                 ephemeral=True
             )
         else:
             delete_guild_setting(self.guild_id, "system_prompt")
+            logger.info(
+                f"System prompt cleared for guild {self.guild_id} "
+                f"by user {interaction.user.id} ({interaction.user.name})"
+            )
             await interaction.response.send_message(
                 "✅ System prompt cleared (using default).",
                 ephemeral=True
             )
-        
-        logger.info(f"System prompt updated for guild {self.guild_id}")
 
 
 class TemperatureModal(discord.ui.Modal, title="Temperature Configuration"):
@@ -238,29 +318,29 @@ class ConfigView(discord.ui.View):
         
         return embed
     
-    @discord.ui.button(label="Edit System Prompt", style=discord.ButtonStyle.primary, emoji="🧠")
+    @discord.ui.button(label="System Prompt", style=discord.ButtonStyle.primary, emoji="🧠", row=0)
     async def edit_prompt(self, interaction: discord.Interaction, button: discord.ui.Button):
         has_permission, error_msg = check_admin_permission(interaction)
         if not has_permission:
             await interaction.response.send_message(error_msg, ephemeral=True)
             return
-        
+
         current = get_guild_setting(self.guild_id, "system_prompt")
         modal = SystemPromptModal(self.guild_id, current)
         await interaction.response.send_modal(modal)
-    
-    @discord.ui.button(label="Adjust Temperature", style=discord.ButtonStyle.primary, emoji="🌡️")
+
+    @discord.ui.button(label="Temperature", style=discord.ButtonStyle.primary, emoji="🌡️", row=0)
     async def adjust_temp(self, interaction: discord.Interaction, button: discord.ui.Button):
         has_permission, error_msg = check_admin_permission(interaction)
         if not has_permission:
             await interaction.response.send_message(error_msg, ephemeral=True)
             return
-        
+
         current = get_guild_temperature(self.guild_id)
         modal = TemperatureModal(self.guild_id, current)
         await interaction.response.send_modal(modal)
-    
-    @discord.ui.button(label="Set Max Tokens", style=discord.ButtonStyle.primary, emoji="📊")
+
+    @discord.ui.button(label="Max Tokens", style=discord.ButtonStyle.primary, emoji="📊", row=0)
     async def set_tokens(self, interaction: discord.Interaction, button: discord.ui.Button):
         has_permission, error_msg = check_admin_permission(interaction)
         if not has_permission:
@@ -339,17 +419,17 @@ class ConfigView(discord.ui.View):
         if not has_permission:
             await interaction.response.send_message(error_msg, ephemeral=True)
             return
-        
+
         conversation_id = interaction.channel_id
         history = get_conversation_history(conversation_id)
-        
+
         if not history:
             await interaction.response.send_message(
                 "ℹ️ No conversation history to clear.",
                 ephemeral=True
             )
             return
-        
+
         # Remove last assistant + user messages
         removed = 0
         while history and removed < 2:
@@ -358,37 +438,37 @@ class ConfigView(discord.ui.View):
                 removed += 1
             else:
                 break
-        
+
         await interaction.response.send_message(
             "🧹 Last interaction removed from conversation history.",
             ephemeral=True
         )
         logger.info(f"Cleared last interaction in channel {interaction.channel_id}")
-    
+
     @discord.ui.button(label="Clear All History", style=discord.ButtonStyle.danger, emoji="🗑️", row=2)
     async def clear_all_history(self, interaction: discord.Interaction, button: discord.ui.Button):
         has_permission, error_msg = check_admin_permission(interaction)
         if not has_permission:
             await interaction.response.send_message(error_msg, ephemeral=True)
             return
-        
+
         conversation_id = interaction.channel_id
         history = get_conversation_history(conversation_id)
-        
+
         if not history:
             await interaction.response.send_message(
                 "ℹ️ No conversation history to clear.",
                 ephemeral=True
             )
             return
-        
+
         clear_conversation_history(conversation_id)
         await interaction.response.send_message(
             f"🗑️ Cleared entire conversation history ({len(history)} messages).",
             ephemeral=True
         )
         logger.info(f"Cleared all conversation history in channel {interaction.channel_id}")
-    
+
     @discord.ui.button(label="Reset to Defaults", style=discord.ButtonStyle.danger, emoji="🔄", row=3)
     async def reset_all(self, interaction: discord.Interaction, button: discord.ui.Button):
         has_permission, error_msg = check_admin_permission(interaction)

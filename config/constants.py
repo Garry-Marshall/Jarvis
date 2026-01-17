@@ -200,6 +200,22 @@ LOG_BACKUP_COUNT = 5
 # Search cooldown cleanup threshold (seconds)
 SEARCH_COOLDOWN_CLEANUP = 3600  # 1 hour
 
+# ============================================================================
+# RATE LIMITING CONFIGURATION
+# ============================================================================
+
+# Rate limits for web search (per-user and per-guild)
+SEARCH_RATE_LIMIT_USER_PER_MINUTE = 3
+SEARCH_RATE_LIMIT_USER_PER_HOUR = 20
+SEARCH_RATE_LIMIT_USER_COOLDOWN = 20  # seconds
+
+SEARCH_RATE_LIMIT_GUILD_PER_MINUTE = 10
+SEARCH_RATE_LIMIT_GUILD_PER_HOUR = 100
+SEARCH_RATE_LIMIT_GUILD_COOLDOWN = 10  # seconds
+
+# Rate limits for system prompt changes
+MAX_PROMPT_CHANGES_PER_HOUR = 5
+
 # CPU measurement interval for system stats (seconds)
 CPU_MEASUREMENT_INTERVAL = 0.1
 
